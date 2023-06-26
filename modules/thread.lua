@@ -105,6 +105,8 @@ return function(BUS)
             local module_registry = c3d.registry.get_module_registry()
             local thread_module   = module_registry:new_entry("thread")
 
+            thread_module:set_entry(c3d.registry.entry("object_registry"),objects)
+
             thread_module:set_entry(c3d.registry.entry("new_thread"),function(code)
                 local id = generic.uuid4()
 
