@@ -37,7 +37,7 @@ return {register_bus=function(ENV)
             pressed_keys={},
             textinput=true
         },
-        instance={},
+        instance={package={}},
         object={},
         threads={},
         sys={
@@ -145,7 +145,7 @@ return {register_bus=function(ENV)
             end,
             read_file=function(this,path,...)
                 local extension = path:match("^.+(%..+)$")
-                local file_path = fs.combine(BUS.instance.scenedir,path)
+                local file_path = fs.combine(BUS.instance.package.scenedir,path)
 
                 if not this.__rest.file_handlers[extension] then
                     error("Tried to decode unsupported file format: "..tostring(extension or ""))

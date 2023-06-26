@@ -49,12 +49,17 @@ return function(ENV,libdir,...)
         BUS.graphics.screen_parent = parent
         BUS.graphics.event_offset = vector.new(ox,oy)
         BUS.clr_instance.update_palette(terminal)
-        BUS.instance.scenedir = fs.getDir(path) or ""
-        BUS.instance.scenepak = string.format(
+        BUS.instance.package.scenedir = fs.getDir(path) or ""
+        BUS.instance.package.libdir   = libdir
+        BUS.instance.package.scenepak = string.format(
             "/%s/modules/required/?.lua;/%s/?.lua;/rom/modules/main/?.lua",
-            libdir,BUS.instance.scenedir
+            libdir,BUS.instance.package.scenedir
         )
-        BUS.instance.libpak = string.format(
+        BUS.instance.package.libpak = string.format(
+            "/%s/?.lua;/rom/modules/main/?.lua",
+            libdir
+        )
+        BUS.instance.package.intpak = string.format(
             "/%s/?.lua;/rom/modules/main/?.lua",
             libdir
         )
@@ -72,7 +77,7 @@ return function(ENV,libdir,...)
         
         log("Attempting to load given program",log.info)
         if type(program[1]) == "function" then
-            ENV.package.path = BUS.instance.scenepak
+            ENV.package.path = BUS.instance.package.scenepak
             BUS.plugin_internal.load_registered_modules()
             BUS.plugin_internal.load_registered_objects()
             local program_main = setfenv(program[1],ENV)
@@ -209,6 +214,7 @@ return function(ENV,libdir,...)
     ENV.c3d.plugin.load(require("core.objects.sprite_sheet")    .add(BUS))
     ENV.c3d.plugin.load(require("core.objects.raw_mesh")        .add(BUS))
     ENV.c3d.plugin.load(require("core.objects.material")        .add(BUS))
+    ENV.c3d.plugin.load(require("core.objects.layout")          .add(BUS))
     ENV.c3d.plugin.load(require("core.objects.pipeline")        .add(BUS))
     BUS.plugin_internal.register_objects()
     
@@ -225,12 +231,13 @@ return function(ENV,libdir,...)
     ENV.c3d.plugin.load(require("modules.geometry")   (BUS))
     ENV.c3d.plugin.load(require("modules.shader")     (BUS))
     ENV.c3d.plugin.load(require("modules.camera")     (BUS))
-    ENV.c3d.plugin.load(require("modules.pipe")       (BUS))
+    ENV.c3d.plugin.load(require("modules.pipeline")   (BUS))
     ENV.c3d.plugin.load(require("modules.vector")     (BUS))
     ENV.c3d.plugin.load(require("modules.interact")   (BUS))
     ENV.c3d.plugin.load(require("modules.mesh")       (BUS))
     ENV.c3d.plugin.load(require("modules.log")        (BUS))
     ENV.c3d.plugin.load(require("modules.palette")    (BUS))
+    ENV.c3d.plugin.load(require("modules.model")      (BUS))
     BUS.plugin_internal.register_modules()
 
     require("modules.c3d")(BUS,ENV)

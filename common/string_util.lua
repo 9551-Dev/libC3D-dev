@@ -72,4 +72,13 @@ function strings.ensure_line_size(str,width)
     return result_str
 end
 
+function strings.format_table__tostring(tbl)
+    local str = "<"
+    for k,v in next,tbl do
+        str = str .. ("%s->%s; "):format(tostring(k),tostring(v))
+    end
+
+    return str:gsub(";% $","") .. ">"
+end
+
 return strings

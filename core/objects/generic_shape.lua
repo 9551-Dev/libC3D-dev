@@ -25,7 +25,13 @@ return {add=function(BUS)
                 return BUS.object.scene_object.new(tbl_util.deepcopy(self,free_of_instantiation))
             end)
 
+            generic_shape_object:set_entry(c3d.registry.entry("cast"),function(self,layout)
+                self.casted = layout:cast_generic_shape_layout(self)
+                return self
+            end)
+
             generic_shape_object:constructor(function(geometry)
+                geometry.casted = BUS.pipe.default:get_layout():cast_generic_shape_layout(geometry)
                 return geometry
             end)
         end

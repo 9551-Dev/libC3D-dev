@@ -48,6 +48,22 @@ return function(BUS)
                             8,6,5, 7,8,5,
                             3,5,1, 7,5,3,
                             5,2,1, 5,6,2
+                        },
+                        face_normal_idx={
+                            1,1,
+                            2,2,
+                            3,3,
+                            4,4,
+                            5,5,
+                            6,6,
+                        },
+                        face_normals={
+                            0,1,0,
+                            1,0,0,
+                            -1,0,0,
+                            0,0,-1,
+                            0,0,1,
+                            0,-1,0
                         }
                     }
                 }
@@ -116,10 +132,6 @@ return function(BUS)
                         }
                     }
                 }
-            end)
-
-            geometry_module:set_entry(c3d.registry.entry("load_model"),function(path)
-                return BUS.object.imported_model.new(path)
             end)
         end
 

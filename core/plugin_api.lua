@@ -1,4 +1,5 @@
-local tbl = require("common.table_util")
+local string_util = require("common.string_util")
+local tbl         = require("common.table_util")
 
 local object = require("core.object")
 
@@ -8,7 +9,7 @@ return {init=function(BUS)
     function methods.register_modules()
         BUS.log("[ Registering loaded modules.. ]",BUS.log.info)
         for k,v in tbl.iterate_order(BUS.plugin.modules) do
-            for id,loader in pairs(v) do 
+            for id,loader in pairs(v) do
                 BUS.plugin.modules[k][id] = nil
                 local ok,err = pcall(loader,0)
                 if not ok then
@@ -31,12 +32,12 @@ return {init=function(BUS)
             end
             BUS.c3d[module] = features
         end
-    end 
+    end
 
     function methods.register_objects()
         BUS.log("[ Registering loaded objects.. ]",BUS.log.info)
         for k,v in tbl.iterate_order(BUS.plugin.objects) do
-            for id,loader in pairs(v) do 
+            for id,loader in pairs(v) do
                 BUS.plugin.objects[k][id] = nil
                 local ok,err = pcall(loader,0)
                 if not ok then
@@ -50,7 +51,10 @@ return {init=function(BUS)
         local busmoddata = BUS.registry.object_registry
         for object_name,entry_id in pairs(busmoddata.entry_lookup) do
             local object_entry = busmoddata.entries[entry_id]
-            local metatable = {__index=object.new{},__tostring=function() return object_name end}
+            local metatable = {__index=object.new{},__tostring=function(this)
+                return ("%s[OBJECT]%s"):format(object_name,string_util.format_table__tostring(this))
+            end}
+
             local methods = metatable.__index
             for k,v in pairs(object_entry.__rest.metadata) do metatable[k] = v end
             if object_entry.__rest.constructor then
@@ -76,7 +80,7 @@ return {init=function(BUS)
     function methods.register_threads()
         BUS.log("[ Registering loaded threads.. ]",BUS.log.info)
         for k,v in tbl.iterate_order(BUS.plugin.threads) do
-            for id,loader in pairs(v) do 
+            for id,loader in pairs(v) do
                 BUS.plugin.modules[k][id] = nil
                 local ok,err = pcall(loader,0)
                 if not ok then
@@ -104,7 +108,7 @@ return {init=function(BUS)
             BUS.triggers.on_full_load[k] = nil
             local ok,err = pcall(v)
             if not ok then
-                BUS.log("Failed to finilize plugin load -> "..err,BUS.log.error)
+                BUS.log("Failed to finalize plugin load -> "..err,BUS.log.error)
             end
         end
     end

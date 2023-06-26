@@ -78,9 +78,9 @@ return {add=function(BUS)
                 local id = generic.uuid4()
 
                 local geometry_properties = {
-                    scale_mat   =scale_matrice(1,1,1),
-                    rotation_mat=euler_rot_matrice(0,0,0),
-                    pos_mat     =trans_matrice(0,0,0)
+                    scale_mat    = scale_matrice(1,1,1),
+                    rotation_mat = euler_rot_matrice(0,0,0),
+                    pos_mat      = trans_matrice(0,0,0)
                 }
 
                 geometry.properties = geometry_properties

@@ -3,6 +3,8 @@ local euler_rotation_matrix   = require("core.3D.matrice.rotation_euler")
 local quat_rotation_matrix    = require("core.3D.matrice.rotation_quaternion")
 local lookat_transform_matrix = require("core.3D.matrice.lookat")
 
+local merge_transforms = require("core.3D.math.merge_transforms")
+
 return {add=function(BUS)
 
     return function()
@@ -14,7 +16,8 @@ return {add=function(BUS)
 
             camera_object:set_entry(c3d.registry.entry("set_position"),function(this,x,y,z)
                 this.position = camera_translate_matrix(-x,-y,-z)
-                this.transform = nil
+    
+                this.transform = merge_transforms(this.position,this.rotation)
                 return this
             end)
             camera_object:set_entry(c3d.registry.entry("set_rotation"),function(this,rx,ry,rz,w)
@@ -23,7 +26,9 @@ return {add=function(BUS)
                 else
                     this.rotation = quat_rotation_matrix(-rx,-ry,-rz,-w)
                 end
-                this.transform = nil
+
+                this.transform = merge_transforms(this.position,this.rotation)
+
                 return this
             end)
             camera_object:set_entry(c3d.registry.entry("set_transform"),function(this,transform)
@@ -36,9 +41,13 @@ return {add=function(BUS)
             end)
 
             camera_object:constructor(function()
+                local starting_position = camera_translate_matrix(0,0,0)
+                local starting_rotation = euler_rotation_matrix  (0,0,0)
+
                 return {
-                    rotation = euler_rotation_matrix(0,0,0),
-                    position = camera_translate_matrix(0,0,0)
+                    position  = starting_position,
+                    rotation  = starting_rotation,
+                    transform = merge_transforms(starting_position,starting_rotation)
                 }
             end)
         end

@@ -18,10 +18,17 @@ return function(BUS)
 
             system_module:set_entry(c3d.registry.entry("clamp_color"),function(color,limit)
                 return CEIL(color*limit)/limit
+                
             end)
 
-            system_module:set_entry(c3d.registry.entry("environmental_override"),function(tp,val)
-                BUS.triggers.overrides[tp] = val
+            system_module:set_entry(c3d.registry.entry("set_package"),function(name)
+                BUS.ENV.package.path = BUS.instance.package[name]
+            end)
+            system_module:set_entry(c3d.registry.entry("drop_package"),function(name)
+                BUS.instance.package[name] = nil
+            end)
+            system_module:set_entry(c3d.registry.entry("create_package"),function(name,provider)
+                BUS.instance.package[name] = provider(BUS.instance.package)
             end)
         end
 

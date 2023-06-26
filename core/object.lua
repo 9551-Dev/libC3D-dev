@@ -8,7 +8,7 @@ local function make_methods(child)
             child = obj
             return obj
         end,
-        type = function() return child.obj_type end,
+        type = function() return child.obj_type or tostring(child) end,
     },{__tostring=function() return "object" end})
 end
 

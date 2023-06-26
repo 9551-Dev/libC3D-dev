@@ -7,6 +7,14 @@ function generic.uuid4()
     end)
 end
 
+function generic.macro_id()
+    local random = math.random
+    local template ='xxyyyxx'
+    return string.gsub(template, '[xy]', function (c)
+        return string.format('%x', c == 'x' and random(0, 0xf) or random(8, 0xb))
+    end)
+end
+
 function generic.precise_sleep(t)
     local ftime = os.epoch("utc")+t*1000
     while os.epoch("utc") < ftime do

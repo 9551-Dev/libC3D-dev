@@ -11,11 +11,11 @@ return {add=function(BUS)
 
             imported_model_object:set_entry(c3d.registry.entry("make_geometry"),function(this,scale)
                 scale = scale or 1
-                local ver = this.DATA.geometry.vertices
+                local ver = this.file_data.geometry.vertices
                 for i=1,#ver do
                     ver[i] = ver[i]*scale
                 end
-                return BUS.object.generic_shape.new(this.DATA)
+                return BUS.object.generic_shape.new(this.file_data)
             end)
 
             imported_model_object:define_decoder(".obj",obj_decode)
@@ -23,7 +23,7 @@ return {add=function(BUS)
             imported_model_object:constructor(function(path)
                 local obj = {}
 
-                obj.DATA = imported_model_object:read_file(path)
+                obj.file_data = imported_model_object:read_file(path)
 
                 return obj
             end)

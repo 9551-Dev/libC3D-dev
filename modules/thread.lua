@@ -109,7 +109,7 @@ return function(BUS)
                 local id = generic.uuid4()
 
                 if not is_code(code) then
-                    local selected_path = fs.combine(BUS.instance.scenedir,code)
+                    local selected_path = fs.combine(BUS.instance.package.scenedir,code)
                     local file,reason = fs.open(selected_path,"r")
                     if file then
                         code = file.readAll()
