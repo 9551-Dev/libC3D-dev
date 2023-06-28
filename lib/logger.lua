@@ -54,7 +54,7 @@ end
 local function write_to_log_internal(self,str,type)
     local str = tostring(str)
     type = type or "info"
-    local timeStr = tostring(#self.history+1)..": ["..(os.date("%T", os.epoch "local" / 1000) .. (".%03d"):format(os.epoch "local" % 1000)):gsub("%."," ").."] "
+    local timeStr = tostring(#self.history+1)..": ["..(os.date("%T", os.epoch "utc" / 1000) .. (".%03d"):format(os.epoch "utc" % 1000)):gsub("%."," ").."] "
     local type_str = "["..(revIndex[type] or "info").."]"
     local base = timeStr..type_str..(" "):rep(type_space-#type_str-#tostring(#self.history+1)-1).."\127"..str
 

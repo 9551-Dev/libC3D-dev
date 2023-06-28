@@ -5,6 +5,9 @@ local VERTEX_ATTRIBUTES = 2
 local COUNT_IDENTIFIER  = "__n"
 
 return {add=function(BUS)
+    local function attribute_sorter(attr_a,attr_b)
+        return attr_a.attributes.type < attr_b.attributes.type
+    end
 
     return function()
         local layout = plugin.new("c3d:object->layout")
@@ -45,7 +48,7 @@ return {add=function(BUS)
             end)
             layout_object:set_entry(c3d.registry.entry("drop_attribute"),function(this,name)
                 for i=1,this.basic_properties.__n do
-                    if this.basic_properties[i] then
+                    if this.basic_properties[i].name == name then
                         table.remove(this.basic_properties,i)
                         break
                     end
@@ -65,17 +68,24 @@ return {add=function(BUS)
 
                 local triangle_count = 0
 
-                for k,v in pairs(this.basic_properties) do
-                    if k ~= COUNT_IDENTIFIER then
-                        local mapped_data = v.model_mapper:apply(generic_shape.geometry,3,v.value_amount)
+                for attribute_index=1,this.basic_properties.__n do
+                    local attribute = this.basic_properties[attribute_index]
 
-                        triangle_count = math.max(triangle_count,#mapped_data)
-                        generated[#generated+1] = mapped_data
-                    end
+                    local mapped_data = attribute.model_mapper:apply(generic_shape.geometry,3,attribute.value_amount)
+                    mapped_data.attributes = attribute
+
+                    triangle_count = math.max(triangle_count,#mapped_data)
+                    generated[attribute_index] = mapped_data
+                end
+
+                table.sort(generated,attribute_sorter)
+
+                for attribute_index=1,this.basic_properties.__n do
+
                 end
 
                 _G.generated = generated
-                _G.properties = this.basic_properties
+                _G.attributes = this.basic_properties
 
                 --[[
                     local render_data = [CASTED]
