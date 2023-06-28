@@ -74,14 +74,14 @@ return function(ENV,libdir,...)
             }
         end
         log("Filled screenbuffer",log.debug)
-        
+
         log("Attempting to load given program",log.info)
         if type(program[1]) == "function" then
             ENV.package.path = BUS.instance.package.scenepak
             BUS.plugin_internal.load_registered_modules()
             BUS.plugin_internal.load_registered_objects()
             local program_main = setfenv(program[1],ENV)
-            local ok,err = pcall(function() 
+            local ok,err = pcall(function()
                 program_main(table.unpack(args,1,args.n))
             end)
             if ok then
@@ -217,7 +217,7 @@ return function(ENV,libdir,...)
     ENV.c3d.plugin.load(require("core.objects.layout")          .add(BUS))
     ENV.c3d.plugin.load(require("core.objects.pipeline")        .add(BUS))
     BUS.plugin_internal.register_objects()
-    
+
     log("[ Loading internal modules.. ]",log.info)
     ENV.c3d.plugin.load(require("modules.timer")      (BUS))
     ENV.c3d.plugin.load(require("modules.event")      (BUS))

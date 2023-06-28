@@ -18,7 +18,7 @@ function parse.stack_trace(trace)
 end
 
 function parse.layout_attributes(input,expected_names)
-    local param_name,name_mapping = input:match("(.+)[%[% ](.+)]")
+    local param_name,name_mapping = input:match("(.+)[%[% ](.-)]")
 
     local mapped_names = {}
     local n            = 1

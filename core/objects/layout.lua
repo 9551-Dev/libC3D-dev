@@ -16,7 +16,8 @@ return {add=function(BUS)
             layout_object:set_entry(c3d.registry.entry("add_vertex_attribute"),function(this,identifier,count,mapper)
                 local name,sub_names = parse.layout_attributes(identifier,count)
 
-                this.basic_properties[name] = {
+                this.basic_properties[#this.basic_properties+1] = {
+                    name         = name,
                     value_amount = count,
                     model_mapper = mapper,
                     sub_names    = sub_names,
@@ -30,7 +31,8 @@ return {add=function(BUS)
             layout_object:set_entry(c3d.registry.entry("add_face_attribute"),function(this,identifier,count,mapper)
                 local name,sub_names = parse.layout_attributes(identifier,count)
 
-                this.basic_properties[name] = {
+                this.basic_properties[#this.basic_properties+1] = {
+                    name         = name,
                     value_amount = count,
                     model_mapper = mapper,
                     sub_names    = sub_names,
@@ -40,6 +42,14 @@ return {add=function(BUS)
                 this.basic_properties.__n = this.basic_properties.__n + 1
 
                 return this
+            end)
+            layout_object:set_entry(c3d.registry.entry("drop_attribute"),function(this,name)
+                for i=1,this.basic_properties.__n do
+                    if this.basic_properties[i] then
+                        table.remove(this.basic_properties,i)
+                        break
+                    end
+                end
             end)
 
             layout_object:set_entry(c3d.registry.entry("generate"),function(this)
@@ -53,9 +63,14 @@ return {add=function(BUS)
                 local generated = {}
                 local cast      = {generated=generated}
 
+                local triangle_count = 0
+
                 for k,v in pairs(this.basic_properties) do
                     if k ~= COUNT_IDENTIFIER then
-                        generated[k] = v.model_mapper:apply(generic_shape.geometry,3,v.value_amount)
+                        local mapped_data = v.model_mapper:apply(generic_shape.geometry,3,v.value_amount)
+
+                        triangle_count = math.max(triangle_count,#mapped_data)
+                        generated[#generated+1] = mapped_data
                     end
                 end
 

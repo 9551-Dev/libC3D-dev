@@ -69,28 +69,6 @@ return function(BUS)
                     return output
                 end
             },__tostring=function(self) return "simple_model_mapper"..strings.format_table__tostring(self) end},
-            apply=function(self,model,group_size)
-                local output = {}
-
-                local dataset = model[self.dataset_name]
-                local index   = model[self.index_name]
-
-                local group_count = #index/group_size
-
-                for group_index=1,group_count do
-                    local current_group = {}
-                    output[group_index] = current_group
-
-                    local index_position = (group_index-1)*group_size+1
-                    for i=1,group_size do
-                        local index_location = index_position+i-1
-                        local index_data     = index  [index_location]
-                        current_group[i]     = dataset[index_data]
-                    end
-                end
-
-                return output
-            end,
             provider={__index=object.new{
                 apply=function(self,model)
                     local output     = {}
@@ -103,9 +81,9 @@ return function(BUS)
 
                     for i=1,#model_data/self.partition_size do
                         if data and data[i] then
-                            output[i] = data[i]
+                            output[i] = {data[i]}
                         else
-                            output[i] = i
+                            output[i] = {i}
                         end
                     end
 
@@ -119,8 +97,19 @@ return function(BUS)
             },__tostring=function(self) return "model_data_supplier"..strings.format_table__tostring(self) end},
             packer={__index=object.new{
                 apply=function(self,model)
+                    local output = {}
 
-                    return self.data
+                    local data = model[self.source]
+                    for data_begin=1,#data,self.group_size do
+                        local data_block = {}
+                        for data_offset=1,self.group_size do
+                            local data_index = data_begin+data_offset - 1
+                            data_block[data_offset] = data[data_index]
+                        end
+                        output[#output+1] = data_block
+                    end
+
+                    return output
                 end
             },__tostring=function(self) return "model_data_packer"..strings.format_table__tostring(self) end}
         }
@@ -165,7 +154,7 @@ return function(BUS)
                 return setmetatable({
                     source     = source,
                     group_size = grouping_size
-                },objects.supplier):__build()
+                },objects.packer):__build()
             end)
         end
 

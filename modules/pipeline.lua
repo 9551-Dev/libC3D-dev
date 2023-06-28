@@ -4,12 +4,9 @@ return function(BUS)
         local pipe = plugin.new("c3d:module->pipeline")
 
         function pipe.on_init_finish()
-            --[[local base_layout = BUS.object.layout.new()
-                :add_vertex_attribute("position",3,BUS.c3d.model.map    ("vertices","tris"))
-                :add_face_attribute  ("id",      1,BUS.c3d.model.provide("tris"           ))
-            :generate()]]
-
             local base_layout = BUS.object.layout.new()
+                :add_vertex_attribute("position[x;y;z]",3,BUS.c3d.model.map("vertices","tris"))
+                :add_face_attribute  ("id[]",  1,BUS.c3d.model.provide("tris",3))
             :generate()
 
             BUS.pipe.default = BUS.object.pipeline.new(base_layout,BUS.pipe.default.id)
