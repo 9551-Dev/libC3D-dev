@@ -74,6 +74,50 @@ return {add=function(BUS)
 
             layout_object:set_entry(c3d.registry.entry("generate"),function(this)
                 -- generates the data getters for the pipeline
+                local instanced_attributes = tbl.copy(this.layout_attributes)
+
+                table.sort(instanced_attributes,attribute_sorter)
+
+                local total_attributes = 0
+                for i=1,instanced_attributes.__n do
+                    local attribute_info = instanced_attributes[i]
+                    local value_count = instanced_attributes[i].value_amount * ((attribute_info.type == VERTEX_ATTRIBUTE) and 3 or 1)
+
+                    total_attributes = total_attributes + value_count
+                end
+
+                local data_getter = tampl.new_patch(attribute_body)
+
+                local attribute_index = 1
+
+                for i=1,instanced_attributes.__n do
+                    local attribute_info = instanced_attributes[i]
+                    local attribute_type = attribute_type_naming[attribute_info.type]
+                    local attribute_name = attribute_info.name
+                    for sub_attribute=1,attribute_info.value_amount do
+                        local attribute_sub_name = attribute_info.sub_names[sub_attribute]
+
+                        if attribute_info.type == FACE_ATTRIBUTE then
+                            data_getter.inject(data_getter._attribute_getter,tampl.At("HEAD"),tampl.compile_code(([[
+                                local %s_%s_%s = geometry.cast.generated[%d + c3d_triangle_index*%d]
+                            ]]):format(attribute_type,attribute_name,attribute_sub_name,attribute_index,total_attributes)))
+
+                            attribute_index = attribute_index + 1
+                        elseif attribute_info.type == VERTEX_ATTRIBUTE then
+                            for vertex_index=1,3 do
+                                local vertex_name = vertex_names[vertex_index]
+
+                                data_getter.inject(data_getter._attribute_getter,tampl.At("HEAD"),tampl.compile_code(([[
+                                    local %s_%s_%s_%s = geometry.cast.generated[%d + c3d_triangle_index*%d]
+                                ]]):format(attribute_type,vertex_name,attribute_name,attribute_sub_name,attribute_index,total_attributes)))
+
+                                attribute_index = attribute_index + 1
+                            end
+                        end
+                    end
+                end
+
+                this.generated.data_getter = data_getter.apply_patches()
 
                 return this
             end)
