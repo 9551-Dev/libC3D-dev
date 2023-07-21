@@ -22,7 +22,7 @@ return function(c3d)
             stitch=function(...)
                 local data = {...}
                 return table.concat(data,"\n")
-            end 
+            end
         },
     __tostring=function(self) return "MACRO_UTIL"..strutil.format_table__tostring(self) end}
 
@@ -79,62 +79,7 @@ return function(c3d)
         return macro_patchable.apply_patches(),macro_patchable
     end
 
-    --[==[local macro_source = [=[
-        local tbl = {}
-        write("hello world")
-        addtable(tbl,1,2,3,4,5)
-        for i=1,5 do
-            printat(tbl[i],1,i+1)
-        end
-    ]=]
-
-    local function write_macro_processor(util,a1)
-        return util.compile(([[
-            term.write(%s)
-        ]]):format(a1))
-    end
-
-    local function printat_macro_processor(util,text,x,y)
-        return util.compile(([[
-            term.setCursorPos(%s,%s)
-            print(%s)
-        ]]):format(x,y,text))
-    end
-
-    local function addtable_macro_processor(util,name,...)
-        local count_var = util:make_varname("index")
-        local code = ("local %s=1"):format(count_var)
-        local args = {...}
-        for i=1,#args do
-            local value = args[i]
-            code = code .. util.stitch(
-                ("%s[%s] = %s"):format(name,count_var,value),
-                ("%s = %s + 1"):format(count_var,count_var)
-            )
-        end
-
-        return util.compile(util:wrap_doend(code))
-    end
-
-    local built = process_macros(macro_source,{
-        {
-            processor=write_macro_processor,
-            type="write"
-        },
-        {
-            processor=printat_macro_processor,
-            type="printat"
-        },
-        {
-            processor=addtable_macro_processor,
-            type="addtable"
-        }
-})
-
-    c3d.log.add(built)]==]
-
     return {
         process=process_macros
     }
-
 end

@@ -74,7 +74,7 @@ return function(BUS)
             graphics_module:set_entry(c3d.registry.entry("blank_texture"),function(w,h,settings)
                 local pixels                = {w=w,h=h}
                 local transparency_behavior = {}
-                
+
                 local texture_data = {
                     w=w,h=h,
                     pixels={pixels},

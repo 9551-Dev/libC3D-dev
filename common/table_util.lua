@@ -1,5 +1,3 @@
-local PAIRS = pairs
-
 local tbls = {}
 
 function tbls.get_table_len(tbl)
@@ -75,6 +73,14 @@ function tbls.deepcopy(tbl,keep)
         return out
     end
     return copy(tbl)
+end
+
+function tbls.copy(tbl)
+    local new = {}
+    for k,v in pairs(tbl) do
+        new[k] = v
+    end
+    return new
 end
 
 function tbls.map_iterator(w,h)

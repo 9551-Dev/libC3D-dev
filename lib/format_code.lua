@@ -1,3 +1,25 @@
+-- MIT License
+--
+-- Copyright (c) 2022-2023 JackMacWindows
+--
+-- Permission is hereby granted, free of charge, to any person obtaining a copy
+-- of this software and associated documentation files (the "Software"), to deal
+-- in the Software without restriction, including without limitation the rights
+-- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+-- copies of the Software, and to permit persons to whom the Software is
+-- furnished to do so, subject to the following conditions:
+--
+-- The above copyright notice and this permission notice shall be included in all
+-- copies or substantial portions of the Software.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+-- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+-- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+-- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+-- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+-- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+-- SOFTWARE.
+
 local lex do
     local error_mt = {}
     function error_mt.__tostring(self)
@@ -208,25 +230,26 @@ local binop = {
     --["//"] = true,
 }
 
-local keywords = {
-    ["break"] = true,
-    ["elseif"] = true,
-    ["for"] = true,
-    ["if"] = true,
-    ["in"] = true,
-    ["local"] = true,
-    ["return"] = true,
-    ["not"] = true,
-}
+local function advance(tokens, start, indent, res, amount)
+    local i = start
+    while i <= start + amount do
+        if tokens[i] and tokens[i]:match "^%-%-" then
+            res.comment = res.comment .. tokens[i] .. "\n" .. (" "):rep(indent)
+            amount = amount + 1
+        end
+        i = i + 1
+    end
+    return start + amount
+end
 
 local body, tbl, exp
 
 function tbl(tokens, start, indent, res)
     indent = indent + 4
-    start = start + 1
+    start = advance(tokens, start, indent, res, 1)
     if tokens[start] == "}" then
         res.str = res.str .. "{}"
-        return start + 1
+        return advance(tokens, start, indent, res, 1)
     else
         res.str = res.str .. "{\n" .. (" "):rep(indent)
     end
@@ -235,18 +258,18 @@ function tbl(tokens, start, indent, res)
         --print("tbl", indent, v, start)
         if v == "[" then
             res.str = res.str .. "["
-            start = exp(tokens, start + 1, indent, res)
+            start = exp(tokens, advance(tokens, start, indent, res, 1), indent, res)
             res.str = res.str .. "] = "
-            start = exp(tokens, start + 2, indent, res)
-        elseif v == "{" then start = tbl(tokens, start + 1, indent, res)
+            start = exp(tokens, advance(tokens, start, indent, res, 2), indent, res)
+        elseif v == "{" then start = tbl(tokens, advance(tokens, start, indent, res, 1), indent, res)
         elseif v == "}" then
             if tokens[start-1] == "," then res.str = res.str:sub(1, -5) .. "}"
             else res.str = res.str .. "\n" .. (" "):rep(indent - 4) .. "}" end
-            return start + 1
-        elseif v == "," or v == ";" then res.str = res.str .. v .. "\n" .. (" "):rep(indent) start = start + 1
+            return advance(tokens, start, indent, res, 1)
+        elseif v == "," or v == ";" then res.str = res.str .. v .. "\n" .. (" "):rep(indent) start = advance(tokens, start, indent, res, 1)
         elseif tokens[start+1] == "=" then
             res.str = res.str .. v .. " = "
-            start = exp(tokens, start + 2, indent, res)
+            start = exp(tokens, advance(tokens, start, indent, res, 2), indent, res)
         else
             start = exp(tokens, start, indent, res)
         end
@@ -260,13 +283,13 @@ local function prefixexp(tokens, start, indent, res)
     if tokens[start] == "(" then
         res.str = res.str .. "("
         --print("prefixexp")
-        start = subexpr(tokens, start + 1, indent, res, 0)
+        start = subexpr(tokens, advance(tokens, start, indent, res, 1), indent, res, 0)
         res.str = res.str .. ")"
-        --print("prefixexp exit", start + 1)
-        return start + 1
+        --print("prefixexp exit", advance(tokens, start, indent, res, 1))
+        return advance(tokens, start, indent, res, 1)
     else
         res.str = res.str .. tokens[start]
-        return start + 1
+        return advance(tokens, start, indent, res, 1)
     end
 end
 
@@ -278,24 +301,24 @@ local function primaryexp(tokens, start, indent, res)
         if v == nil then return start
         elseif v == "." or v == ":" then
             res.str = res.str .. v .. tokens[start+1]
-            start = start + 2
+            start = advance(tokens, start, indent, res, 2)
         elseif v == "[" then
             res.str = res.str .. "["
-            start = subexpr(tokens, start + 1, indent, res, 0) + 1
+            start = advance(tokens, subexpr(tokens, advance(tokens, start, indent, res, 1), indent, res, 0), indent, res, 1)
             res.str = res.str .. "]"
         elseif v == "{" then
             start = tbl(tokens, start, indent, res)
         elseif v:match "^[\"']" or v:match "^%[=*%[" then
             res.str = res.str .. " " .. v
-            start = start + 1
+            start = advance(tokens, start, indent, res, 1)
         elseif v == "(" then
             res.str = res.str .. "("
-            start = start + 1
+            start = advance(tokens, start, indent, res, 1)
             if tokens[start] ~= ")" then
                 start = explist(tokens, start, indent, res)
             end
             res.str = res.str .. ")"
-            start = start + 1
+            start = advance(tokens, start, indent, res, 1)
         else
             --print("primaryexp exit", start)
             return start
@@ -308,19 +331,19 @@ local function simpleexp(tokens, start, indent, res)
     --print("simpleexp", indent, v, start)
     if tonumber(v) or v:match "^[\"']" or v:match "^%[=*%[" or v == "nil" or v == "true" or v == "false" or v == "..." then
         res.str = res.str .. v
-        return start + 1
+        return advance(tokens, start, indent, res, 1)
     elseif v == "{" then
         return tbl(tokens, start, indent, res)
     elseif v == "function" then
         res.str = res.str .. "function("
-        start = start + 2
+        start = advance(tokens, start, indent, res, 2)
         while tokens[start] ~= ")" do
             if tokens[start] == "," then res.str = res.str .. ", "
             else res.str = res.str .. tokens[start] end
-            start = start + 1
+            start = advance(tokens, start, indent, res, 1)
         end
         res.str = res.str .. ")\n" .. (" "):rep(indent + 4)
-        return body(tokens, start + 1, indent + 4, res)
+        return body(tokens, advance(tokens, start, indent, res, 1), indent + 4, res)
     else
         return primaryexp(tokens, start, indent, res)
     end
@@ -331,7 +354,7 @@ function subexpr(tokens, start, indent, res, limit)
     --print("subexpr", indent, v, start)
     if v == "-" or v == "#" or v == "not" then
         res.str = res.str .. v .. (v == "not" and " " or "")
-        start = subexpr(tokens, start + 1, indent, res, 8) -- UNARY_PRIORITY = 8
+        start = subexpr(tokens, advance(tokens, start, indent, res, 1), indent, res, 8) -- UNARY_PRIORITY = 8
     else
         start = simpleexp(tokens, start, indent, res)
         --print("simpleexp exit", start)
@@ -340,7 +363,7 @@ function subexpr(tokens, start, indent, res, limit)
     while binop[v] and binop[v][1] > limit do
         --print("subexpr", indent, v)
         res.str = res.str .. " " .. v .. " "
-        start = subexpr(tokens, start + 1, indent, res, binop[v][2])
+        start = subexpr(tokens, advance(tokens, start, indent, res, 1), indent, res, binop[v][2])
         v = tokens[start]
     end
     --print("subexpr exit", start)
@@ -351,7 +374,7 @@ function explist(tokens, start, indent, res)
     start = exp(tokens, start, indent, res)
     while tokens[start] == "," do
         res.str = res.str .. ", "
-        start = exp(tokens, start + 1, indent, res)
+        start = exp(tokens, advance(tokens, start, indent, res, 1), indent, res)
     end
     return start
 end
@@ -361,11 +384,15 @@ function exp(tokens, start, indent, res)
 end
 
 local function namelist(tokens, start, indent, res)
+    if tokens[start]:match "^%-%-" then
+        res.str = res.str .. tokens[start] .. "\n" .. (" "):rep(indent)
+        start = advance(tokens, start, indent, res, 1)
+    end
     res.str = res.str .. tokens[start]
-    start = start + 1
+    start = advance(tokens, start, indent, res, 1)
     while tokens[start] == "," do
         res.str = res.str .. ", " .. tokens[start+1]
-        start = start + 2
+        start = advance(tokens, start, indent, res, 2)
     end
     return start
 end
@@ -373,124 +400,138 @@ end
 function body(tokens, start, indent, res)
     while start and start <= #tokens do
         local v = tokens[start]
-        --print("body", indent, v, start)
-        if v == "break" then
-            res.str = res.str .. v .. "\n" .. (" "):rep(indent)
-            start = start + 1
+        print("body", indent, v, start)
+        if v:match "^%-%-" then
+            res.str = res.str .. v .. "\n" .. (" "):rep(indent) .. res.comment
+            res.comment = ""
+            start = advance(tokens, start, indent, res, 1)
+        elseif v == "break" then
+            res.str = res.str .. v .. "\n" .. (" "):rep(indent) .. res.comment
+            res.comment = ""
+            start = advance(tokens, start, indent, res, 1)
         elseif v == "do" then
-            res.str = res.str .. "do\n" .. (" "):rep(indent + 4)
-            start = body(tokens, start + 1, indent + 4, res)
-            res.str = res.str .. "\n"  .. (" "):rep(indent)
+            res.str = res.str .. "do\n" .. res.comment .. (" "):rep(indent + 4)
+            start = body(tokens, advance(tokens, start, indent + 4, res, 1), indent + 4, res)
+            res.str = res.str .. "\n"  .. (" "):rep(indent) .. res.comment
         elseif v == "end" then
             res.str = res.str:sub(1, -5) .. "end"
-            return start + 1
+            return advance(tokens, start, indent - 4, res, 1)
         elseif v == "while" then
             res.str = res.str .. "while "
-            start = exp(tokens, start + 1, indent, res)
-            res.str = res.str .. " do\n" .. (" "):rep(indent + 4)
-            start = body(tokens, start + 1, indent + 4, res)
-            res.str = res.str .. "\n"  .. (" "):rep(indent)
+            start = exp(tokens, advance(tokens, start, indent, res, 1), indent, res)
+            res.str = res.str .. " do\n" .. (" "):rep(indent + 4) .. res.comment
+            res.comment = ""
+            start = body(tokens, advance(tokens, start, indent + 4, res, 1), indent + 4, res)
+            res.str = res.str .. "\n" .. (" "):rep(indent) .. res.comment
         elseif v == "repeat" then
-            res.str = res.str .. "repeat\n" .. (" "):rep(indent + 4)
-            start = body(tokens, start + 1, indent + 4, res)
-            res.str = res.str .. "\n"  .. (" "):rep(indent)
+            res.str = res.str .. "repeat\n" .. (" "):rep(indent + 4) .. res.comment
+            start = body(tokens, advance(tokens, start, indent + 4, res, 1), indent + 4, res)
+            res.str = res.str .. "\n" .. (" "):rep(indent) .. res.comment
         elseif v == "until" then
             res.str = res.str:sub(1, -5) .. "until "
-            return exp(tokens, start + 1, indent - 4, res)
+            return exp(tokens, advance(tokens, start, indent - 4, res, 1), indent - 4, res)
         elseif v == "if" then
             res.str = res.str .. "if "
-            start = exp(tokens, start + 1, indent, res)
-            res.str = res.str .. " then\n" .. (" "):rep(indent + 4)
-            start = body(tokens, start + 1, indent + 4, res)
-            res.str = res.str .. "\n"  .. (" "):rep(indent)
+            start = exp(tokens, advance(tokens, start, indent, res, 1), indent, res)
+            res.str = res.str .. " then\n" .. (" "):rep(indent + 4) .. res.comment
+            res.comment = ""
+            start = body(tokens, advance(tokens, start, indent + 4, res, 1), indent + 4, res)
+            res.str = res.str .. "\n"  .. (" "):rep(indent) .. res.comment
         elseif v == "elseif" then
             res.str = res.str:sub(1, -5) .. "elseif "
-            start = exp(tokens, start + 1, indent, res)
-            res.str = res.str .. " then\n" .. (" "):rep(indent)
-            start = start + 1
+            start = exp(tokens, advance(tokens, start, indent, res, 1), indent, res)
+            res.str = res.str .. " then\n" .. (" "):rep(indent) .. res.comment
+            res.comment = ""
+            start = advance(tokens, start, indent, res, 1)
         elseif v == "else" then
-            res.str = res.str:sub(1, -5) .. "else\n" .. (" "):rep(indent)
-            start = start + 1
+            res.str = res.str:sub(1, -5) .. "else\n" .. (" "):rep(indent) .. res.comment
+            res.comment = ""
+            start = advance(tokens, start, indent, res, 1)
         elseif v == "for" then
             if tokens[start+2] == "=" then
                 res.str = res.str .. "for " .. tokens[start+1] .. " = "
-                start = exp(tokens, start + 3, indent, res)
+                start = exp(tokens, advance(tokens, start, indent, res, 3), indent, res)
                 res.str = res.str .. ", "
-                start = exp(tokens, start + 1, indent, res)
+                start = exp(tokens, advance(tokens, start, indent, res, 1), indent, res)
                 if tokens[start] == "," then
                     res.str = res.str .. ", "
-                    start = exp(tokens, start + 1, indent, res)
+                    start = exp(tokens, advance(tokens, start, indent, res, 1), indent, res)
                 end
-                res.str = res.str .. " do\n" .. (" "):rep(indent + 4)
-                start = body(tokens, start + 1, indent + 4, res)
-                res.str = res.str .. "\n"  .. (" "):rep(indent)
+                res.str = res.str .. " do\n" .. (" "):rep(indent + 4) .. res.comment
+                res.comment = ""
+                start = body(tokens, advance(tokens, start, indent + 4, res, 1), indent + 4, res)
+                res.str = res.str .. "\n"  .. (" "):rep(indent) .. res.comment
             else
                 res.str = res.str .. "for "
-                start = namelist(tokens, start + 1, indent, res)
+                start = namelist(tokens, advance(tokens, start, indent, res, 1), indent, res)
                 res.str = res.str .. " in "
-                start = explist(tokens, start + 1, indent, res)
-                res.str = res.str .. " do\n" .. (" "):rep(indent + 4)
-                start = body(tokens, start + 1, indent + 4, res)
-                res.str = res.str .. "\n"  .. (" "):rep(indent)
+                start = explist(tokens, advance(tokens, start, indent, res, 1), indent, res)
+                res.str = res.str .. " do\n" .. (" "):rep(indent + 4) .. res.comment
+                res.comment = ""
+                start = body(tokens, advance(tokens, start, indent + 4, res, 1), indent + 4, res)
+                res.str = res.str .. "\n"  .. (" "):rep(indent) .. res.comment
             end
         elseif v == "function" then
             res.str = res.str .. "function " .. tokens[start+1]
-            start = start + 2
+            start = advance(tokens, start, indent, res, 2)
             while tokens[start] == "." or tokens[start] == ":" do
                 res.str = res.str .. tokens[start] .. tokens[start+1]
-                start = start + 2
+                start = advance(tokens, start, indent, res, 2)
             end
             res.str = res.str .. "("
             if tokens[start+1] ~= ")" then
-                start = namelist(tokens, start + 1, indent, res)
-            else start = start + 1 end
-            res.str = res.str .. ")\n" .. (" "):rep(indent + 4)
-            start = body(tokens, start + 1, indent + 4, res)
-            res.str = res.str .. "\n\n" .. (" "):rep(indent)
+                start = namelist(tokens, advance(tokens, start, indent, res, 1), indent, res)
+            else start = advance(tokens, start, indent, res, 1) end
+            res.str = res.str .. ")\n" .. (" "):rep(indent + 4) .. res.comment
+            start = body(tokens, advance(tokens, start, indent + 4, res, 1), indent + 4, res)
+            res.str = res.str .. "\n\n" .. (" "):rep(indent) .. res.comment
         elseif v == "local" then
             if tokens[start+1] == "function" then
                 res.str = res.str .. "local function " .. tokens[start+2] .. "("
                 if tokens[start+4] ~= ")" then
-                    start = namelist(tokens, start + 4, indent, res)
-                else start = start + 4 end
-                res.str = res.str .. ")\n" .. (" "):rep(indent + 4)
-                start = body(tokens, start + 1, indent + 4, res)
-                res.str = res.str .. "\n\n"  .. (" "):rep(indent)
+                    start = namelist(tokens, advance(tokens, start, indent, res, 4), indent, res)
+                else start = advance(tokens, start, indent, res, 4) end
+                res.str = res.str .. ")\n" .. (" "):rep(indent + 4) .. res.comment
+                res.comment = ""
+                start = body(tokens, advance(tokens, start, indent + 4, res, 1), indent + 4, res)
+                res.str = res.str .. "\n\n"  .. (" "):rep(indent) .. res.comment
             else
                 res.str = res.str .. "local "
-                start = namelist(tokens, start + 1, indent, res)
+                start = namelist(tokens, advance(tokens, start, indent, res, 1), indent, res)
                 if tokens[start] == "=" then
                     res.str = res.str .. " = "
-                    start = explist(tokens, start + 1, indent, res)
+                    start = explist(tokens, advance(tokens, start, indent, res, 1), indent, res)
                 end
-                res.str = res.str .. "\n" .. (" "):rep(indent)
+                res.str = res.str .. "\n" .. (" "):rep(indent) .. res.comment
             end
         elseif v == "return" then
             res.str = res.str .. "return "
-            start = explist(tokens, start + 1, indent, res)
-            res.str = res.str .. "\n" .. (" "):rep(indent)
+            start = explist(tokens, advance(tokens, start, indent, res, 1), indent, res)
+            res.str = res.str .. "\n" .. (" "):rep(indent) .. res.comment
         elseif v == ";" then
-            res.str = res.str .. ";\n" .. (" "):rep(indent)
+            res.str = res.str .. ";" .. "\n" .. (" "):rep(indent) .. res.comment
         elseif binop[v] then error(tokens[start-1] .. v .. tokens[start+1])
         else
             start = primaryexp(tokens, start, indent, res)
             if tokens[start] == "," or tokens[start] == "=" then
                 while tokens[start] == "," do
                     res.str = res.str .. ", "
-                    start = primaryexp(tokens, start + 1, indent, res)
+                    start = primaryexp(tokens, advance(tokens, start, indent, res, 1), indent, res)
                 end
                 res.str = res.str .. " = "
-                start = explist(tokens, start + 1, indent, res)
+                start = explist(tokens, advance(tokens, start, indent, res, 1), indent, res)
             end
-            res.str = res.str .. "\n" .. (" "):rep(indent)
+            res.str = res.str .. "\n" .. (" "):rep(indent) .. res.comment
         end
+        res.comment = ""
     end
     return start
 end
 
 local function format(text)
-    local res = {str = ""}
-    body(lex(text, 1, 2), 1, 0, res)
+    assert((loadstring or load)(text))
+    local res = {str = "", comment = ""}
+    body(lex(text, 1, true), 1, 0, res)
     return res.str
 end
 

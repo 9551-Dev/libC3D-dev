@@ -1,12 +1,23 @@
 local parse = require("common.parser_util")
+local tbl   = require("common.table_util")
 
-local FACE_ATTRIBUTE    = 1
-local VERTEX_ATTRIBUTES = 2
-local COUNT_IDENTIFIER  = "__n"
+local tampl = require("lib.tampl")
+
+local FACE_ATTRIBUTE   = 1
+local VERTEX_ATTRIBUTE = 2
+local attribute_type_naming = {
+    [FACE_ATTRIBUTE] = "c3d_face_attribute",
+    [VERTEX_ATTRIBUTE] = "c3d_vertex_attribute"
+}
+local vertex_names = {"a","b","c"}
 
 return {add=function(BUS)
-    local function attribute_sorter(attr_a,attr_b)
-        return attr_a.attributes.type < attr_b.attributes.type
+
+    local function attribute_sorter(prop_a,prop_b)
+        return prop_a.type < prop_b.type
+    end
+    local function generated_sorter(attr_a,attr_b)
+        return attribute_sorter(attr_a.attributes,attr_b.attributes)
     end
 
     return function()
@@ -18,23 +29,25 @@ return {add=function(BUS)
 
             layout_object:set_entry(c3d.registry.entry("add_vertex_attribute"),function(this,identifier,count,mapper)
                 local name,sub_names = parse.layout_attributes(identifier,count)
+                this:drop_attribute(name)
 
-                this.basic_properties[#this.basic_properties+1] = {
+                this.layout_attributes[#this.layout_attributes+1] = {
                     name         = name,
                     value_amount = count,
                     model_mapper = mapper,
                     sub_names    = sub_names,
-                    type         = VERTEX_ATTRIBUTES
+                    type         = VERTEX_ATTRIBUTE
                 }
 
-                this.basic_properties.__n = this.basic_properties.__n + 1
+                this.layout_attributes.__n = this.layout_attributes.__n + 1
 
                 return this
             end)
             layout_object:set_entry(c3d.registry.entry("add_face_attribute"),function(this,identifier,count,mapper)
                 local name,sub_names = parse.layout_attributes(identifier,count)
+                this:drop_attribute(name)
 
-                this.basic_properties[#this.basic_properties+1] = {
+                this.layout_attributes[#this.layout_attributes+1] = {
                     name         = name,
                     value_amount = count,
                     model_mapper = mapper,
@@ -42,18 +55,22 @@ return {add=function(BUS)
                     type         = FACE_ATTRIBUTE
                 }
 
-                this.basic_properties.__n = this.basic_properties.__n + 1
+                this.layout_attributes.__n = this.layout_attributes.__n + 1
 
                 return this
             end)
             layout_object:set_entry(c3d.registry.entry("drop_attribute"),function(this,name)
-                for i=1,this.basic_properties.__n do
-                    if this.basic_properties[i].name == name then
-                        table.remove(this.basic_properties,i)
+                for i=1,this.layout_attributes.__n do
+                    if this.layout_attributes[i].name == name then
+                        table.remove(this.layout_attributes,i)
                         break
                     end
                 end
             end)
+
+            local attribute_body = [=[
+                --[[#attribute_getter]]
+            ]=]
 
             layout_object:set_entry(c3d.registry.entry("generate"),function(this)
                 -- generates the data getters for the pipeline
@@ -62,14 +79,13 @@ return {add=function(BUS)
             end)
 
             layout_object:set_entry(c3d.registry.entry("cast_generic_shape_layout"),function(this,generic_shape)
-                -- casts a generic_shape to the layout using the provided generators and the layout data for optimization
                 local generated = {}
                 local cast      = {generated=generated}
 
                 local triangle_count = 0
 
-                for attribute_index=1,this.basic_properties.__n do
-                    local attribute = this.basic_properties[attribute_index]
+                for attribute_index=1,this.layout_attributes.__n do
+                    local attribute = this.layout_attributes[attribute_index]
 
                     local mapped_data = attribute.model_mapper:apply(generic_shape.geometry,3,attribute.value_amount)
                     mapped_data.attributes = attribute
@@ -78,30 +94,40 @@ return {add=function(BUS)
                     generated[attribute_index] = mapped_data
                 end
 
-                table.sort(generated,attribute_sorter)
+                table.sort(generated,generated_sorter)
 
-                for attribute_index=1,this.basic_properties.__n do
+                local output_n = 1
+                for triangle_index=1,triangle_count do
+                    for attribute_index=1,this.layout_attributes.__n do
+                        local generated_list = generated[attribute_index]
+                        local property_data  = generated_list[triangle_index]
+                        local attribute      = generated_list.attributes
+                        if attribute.type == VERTEX_ATTRIBUTE then
+                            for vertex_index=1,3 do
+                                local vertex_data = property_data[vertex_index]
+                                for data_index=1,#vertex_data do
+                                    cast[output_n] = vertex_data[data_index]
 
-                end
+                                    output_n = output_n + 1
+                                end
+                            end
+                        elseif attribute.type == FACE_ATTRIBUTE then
+                            for data_index=1,#property_data do
+                                cast[output_n] = property_data[data_index]
 
-                _G.generated = generated
-                _G.attributes = this.basic_properties
+                                output_n = output_n + 1
+                            end
+                        end
 
-                --[[
-                    local render_data = [CASTED]
-                    local face_datapoints = [CASTED]
-
-                    for face=1,#triangles do
-                        face_property_id = (i-1)*face_datapoints + 1;
                     end
-                ]]
+                end
 
                 return cast
             end)
 
             layout_object:constructor(function()
                 return {
-                    basic_properties = {__n=0},
+                    layout_attributes = {__n=0},
                     generated        = {}
                 }
             end)

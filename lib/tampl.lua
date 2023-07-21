@@ -184,7 +184,7 @@ local function generate_tokens(str)
             token = ""
         elseif token_lookup[char] and not is_string and not is_number and not is_comment then
             if token ~= "" then tokens[#tokens+1] = token end
-            
+
             if not expansible_tokens[char] then
                 tokens[#tokens+1] = char
             end
@@ -242,7 +242,7 @@ local function make_value(token,token_buffer,token_index)
     elseif token:match("(%d*%.?%d+)") then
         out = tonumber(token)
     else out = token end
-    
+
     return out
 end
 
@@ -337,7 +337,7 @@ local function generate_code_tree(tokens)
         end
 
         current_scope[#current_scope+1] = parse_token({},current_token,nil,i)
-        
+
         if scope.open[current_token] then
 
             scope_index = scope_index + 1
@@ -422,7 +422,7 @@ local function load_template_tree(tree)
 
         if not object[index_name] then object[index_name] = {} end
         local hook_named = object[index_name]
-        
+
         hook_named[#hook_named+1] = v
     end
 
@@ -436,7 +436,6 @@ end
 local function load_template(data)
     return load_template_tokens(generate_tokens(data))
 end
-
 
 local function load_template_file(path)
     local file = fs.open(path,"r")
@@ -459,11 +458,11 @@ local function inject_table_position(tp)
 end
 
 return {
-    new_patch      = load_template,
-    from_file      = load_template_file,
-    from_tokens    = load_template_tokens,
-    from_tree      = load_template_tree,
-    compile_code   = parse_code_block,
-    At             = inject_table_position,
-    format_code    = format_code_block
+    new_patch               = load_template,
+    new_patch_from_file     = load_template_file,
+    new_patch_from_tokens   = load_template_tokens,
+    new_patch_from_compiled = load_template_tree,
+    compile_code            = parse_code_block,
+    At                      = inject_table_position,
+    format_code             = format_code_block
 }
