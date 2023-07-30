@@ -8,7 +8,7 @@ return {attach=function(BUS)
     local thread_registry_methods = {
         __index=object.new{
             set_entry=function(this,registry_entry,value)
-                log(str.interpolate("Created new thread registry entry -> <entry_name>"){entry_name=registry_entry.name},log.info)
+                log(str.interpolate("$Created new thread registry entry -> <entry_name>"){entry_name=registry_entry.name},log.info)
 
                 this.entries     [registry_entry.id]   = value
                 this.entry_lookup[registry_entry.name] = registry_entry

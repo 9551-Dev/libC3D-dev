@@ -29,7 +29,7 @@ return {add=function(BUS)
     local plugin_methods = {
         __index = object.new{
             register=function(this)
-                BUS.log(str.interpolate("Registering plugin -> <plugin_id>"){plugin_id=this.PLUGID},BUS.log.debug)
+                BUS.log(str.interpolate("Registering plugin -> $<plugin_id>"){plugin_id=this.PLUGID},BUS.log.debug)
                 BUS.log:dump()
 
                 register_plugin_trigger(this,"frame_finished",  "frame_finished")

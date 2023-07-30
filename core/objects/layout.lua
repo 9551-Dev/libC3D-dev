@@ -100,7 +100,7 @@ return {add=function(BUS)
 
                         if attribute_info.type == FACE_ATTRIBUTE then
                             data_getter.inject(data_getter._attribute_getter,tampl.At("HEAD"),tampl.compile_code(str.interpolate([[
-                                local <type>_<atname>_<subname> = c3d_casted_geometry_source[<attr_idx> + c3d_triangle_index*<tot_attr>]
+                                local $<type>_$<atname>_$<subname> = c3d_casted_geometry_source[$<attr_idx> + c3d_triangle_index*$<tot_attr>]
                             ]]){
                                 type     = attribute_type,
                                 atname   = attribute_name,
@@ -115,7 +115,7 @@ return {add=function(BUS)
                                 local vertex_name = vertex_names[vertex_index]
 
                                 data_getter.inject(data_getter._attribute_getter,tampl.At("HEAD"),tampl.compile_code(str.interpolate([[
-                                    local <type>_<vname>_<atname>_<subname> = c3d_casted_geometry_source[<attr_idx> + c3d_triangle_index*<tot_attr>]
+                                    local $<type>_$<vname>_$<atname>_$<subname> = c3d_casted_geometry_source[$<attr_idx> + c3d_triangle_index*$<tot_attr>]
                                 ]]){
                                     type     = attribute_type,
                                     vname    = vertex_name,

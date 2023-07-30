@@ -1,6 +1,7 @@
 local object = require("core.object")
 
 local generic = require("common.generic")
+local str     = require("common.string_util")
 
 return {attach=function(BUS)
     local log = BUS.log
@@ -8,7 +9,10 @@ return {attach=function(BUS)
     local object_registry_entry = {
         __index=object.new{
             set_entry=function(this,registry_entry,value)
-                log("Created new entry in object registry -> "..this.__rest.name.." -> "..registry_entry.name,log.debug)
+                log(str.interpolate("Created new entry in object registry -> $<group> -> $<name>"){
+                        group=this.__rest.name,
+                        name =registry_entry.name
+                },log.debug)
 
                 this.__rest.entries     [registry_entry.id] = value
                 this.__rest.entry_lookup[registry_entry.name] = registry_entry
@@ -40,7 +44,7 @@ return {attach=function(BUS)
         __index=object.new{
             new_entry=function(this,name)
 
-                log("Created new object registry entry -> "..name)
+                log(str.interpolate("Created new object registry entry -> $<name>"){name=name})
                 log:dump()
 
                 local id = generic.uuid4()

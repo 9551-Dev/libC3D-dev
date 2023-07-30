@@ -1,7 +1,5 @@
 local strings = {}
 
-local expect = require("cc.expect").expect
-
 function strings.wrap(str,lenght,nnl)
     expect(1,str,"string")
     expect(2,lenght,"number")
@@ -32,8 +30,6 @@ function strings.wrap(str,lenght,nnl)
 end
 
 function strings.cut_parts(str,part_size)
-    expect(1,str,"string")
-    expect(2,part_size,"number")
     local parts = {}
     for i = 1, #str, part_size do
         parts[#parts+1] = str:sub(i, i+part_size-1)
@@ -42,8 +38,6 @@ function strings.cut_parts(str,part_size)
 end
 
 function strings.ensure_size(str,width)
-    expect(1,str,"string")
-    expect(2,width,"number")
     local f_line = str:sub(1, width)
     if #f_line < width then
         f_line = f_line .. (" "):rep(width-#f_line)
@@ -52,7 +46,6 @@ function strings.ensure_size(str,width)
 end
 
 function strings.newline(tbl)
-    expect(1,tbl,"table")
     return table.concat(tbl,"\n")
 end
 
@@ -83,7 +76,9 @@ end
 
 function strings.interpolate(str)
     return function(data)
-        return str:gsub("<(.-)>",data)
+        return str:gsub("%$<(.-)>",function(lookup_name)
+            return data[tonumber(lookup_name) or lookup_name]
+        end)
     end
 end
 
