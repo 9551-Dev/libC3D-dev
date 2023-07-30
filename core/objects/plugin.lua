@@ -6,11 +6,11 @@ return {add=function(BUS)
         local plugin_env = setmetatable({
             [register_name]=data
         },{__index=BUS.ENV})
-    
+
         return setfenv(f,plugin_env)
     end
 
-    local function registry_plugin_trigger(plugin,trigger_registry,access_point)
+    local function register_plugin_trigger(plugin,trigger_registry,access_point)
         if type(plugin[access_point]) == "function" then
             BUS.triggers[trigger_registry][#BUS.triggers[trigger_registry]+1] = plugin[access_point]
         end
@@ -22,11 +22,11 @@ return {add=function(BUS)
                 BUS.log("Registering plugin -> " .. this.PLUGID,BUS.log.debug)
                 BUS.log:dump()
 
-                registry_plugin_trigger(this,"frame_finished",  "frame_finished")
-                registry_plugin_trigger(this,"on_full_load",    "on_init_finish")
-                registry_plugin_trigger(this,"post_display",    "post_display")
-                registry_plugin_trigger(this,"post_frame",      "post_frame")
-                registry_plugin_trigger(this,"pre_frame",       "pre_frame")
+                register_plugin_trigger(this,"frame_finished",  "frame_finished")
+                register_plugin_trigger(this,"on_full_load",    "on_init_finish")
+                register_plugin_trigger(this,"post_display",    "post_display")
+                register_plugin_trigger(this,"post_frame",      "post_frame")
+                register_plugin_trigger(this,"pre_frame",       "pre_frame")
 
                 if type(this.register_objects) == "function" then
                     local oload = attach_register(this.register_objects,"OBJECT",BUS.registry.object_registry.entry_lookup)
