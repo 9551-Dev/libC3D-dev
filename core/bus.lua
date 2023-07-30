@@ -1,7 +1,6 @@
-local object = require("core.object")
+local init_registries = require("core.plugin.load_registries")
 
 return {register_bus=function(ENV)
-
     local BUS = {
         timer={last_delta=0,temp_delta=0},
         c3d=ENV.c3d,
@@ -56,19 +55,23 @@ return {register_bus=function(ENV)
             map=ENV.utils.table.createNDarray(1)
         },
         plugin={
-            modules=ENV.utils.table.createNDarray(1),
-            objects=ENV.utils.table.createNDarray(1),
-            threads=ENV.utils.table.createNDarray(1),
+            macros    =ENV.utils.table.createNDarray(1),
+            modules   =ENV.utils.table.createNDarray(1),
+            objects   =ENV.utils.table.createNDarray(1),
+            threads   =ENV.utils.table.createNDarray(1),
+            components=ENV.utils.table.createNDarray(1),
 
             scheduled_overrides=ENV.utils.table.createNDarray(1),
 
             plugin_bus={}
         },
         registry={
-            module_registry=setmetatable({},{__tostring=function() return "module_registry" end}),
-            plugin_registry=setmetatable({},{__tostring=function() return "plugin_registry" end}),
-            object_registry=setmetatable({},{__tostring=function() return "object_registry" end}),
-            thread_registry=setmetatable({},{__tostring=function() return "thread_registry" end})
+            macro_registry     = setmetatable({},{__tostring=function() return "thread_registry"    end}),
+            module_registry    = setmetatable({},{__tostring=function() return "module_registry"    end}),
+            plugin_registry    = setmetatable({},{__tostring=function() return "plugin_registry"    end}),
+            object_registry    = setmetatable({},{__tostring=function() return "object_registry"    end}),
+            thread_registry    = setmetatable({},{__tostring=function() return "thread_registry"    end}),
+            component_registry = setmetatable({},{__tostring=function() return "component_registry" end})
         },
         triggers={
             overrides       ={},
@@ -113,115 +116,8 @@ return {register_bus=function(ENV)
     printout(1,BUS)
     log("",log.info)
 
-    local module_registry_entry = {
-        __index=object.new{
-            set_entry=function(this,registry_entry,value)
-                log("Created new entry in module registry -> "..this.__rest.name.." -> "..registry_entry.name,log.debug)
+    init_registries.for_bus(BUS)
 
-                this.__rest.entries     [registry_entry.id]   = value
-                this.__rest.entry_lookup[registry_entry.name] = registry_entry
-                this.__rest.name_lookup [registry_entry.id]   = registry_entry.name
-            end,
-        },__tostring=function() return "module_registry_entry" end
-    }
-
-    local object_registry_entry = {
-        __index=object.new{
-            set_entry=function(this,registry_entry,value)
-                log("Created new entry in object registry -> "..this.__rest.name.." -> "..registry_entry.name,log.debug)
-
-                this.__rest.entries     [registry_entry.id] = value
-                this.__rest.entry_lookup[registry_entry.name] = registry_entry
-                this.__rest.name_lookup [registry_entry.id] = registry_entry.name
-            end,
-            set_metadata=function(this,name,val)
-                rawset(this.__rest.metadata,name,val)
-            end,
-            constructor=function(this,constructor_method)
-                this.__rest.constructor = constructor_method
-            end,
-            define_decoder=function(this,extension,decoder)
-                this.__rest.file_handlers[extension] = decoder.read
-            end,
-            read_file=function(this,path,...)
-                local extension = path:match("^.+(%..+)$")
-                local file_path = fs.combine(BUS.instance.package.scenedir,path)
-
-                if not this.__rest.file_handlers[extension] then
-                    error("Tried to decode unsupported file format: "..tostring(extension or ""))
-                end
-
-                return this.__rest.file_handlers[extension](file_path,...)
-            end
-        },__tostring=function() return "object_registry_entry" end
-    }
-
-    local module_registry_methods =  {
-        __index=object.new{
-            new_entry=function(this,name)
-
-                log("Created new module registry entry -> "..name)
-                log:dump()
-
-                local id = ENV.utils.generic.uuid4()
-
-                local dat = {}
-                dat.__rest = {name=name,entries={},entry_lookup=dat,name_lookup={}}
-
-                this.entries[id] = dat
-                this.entry_lookup[name] = id
-
-                return setmetatable(dat,module_registry_entry):__build()
-            end,
-            get=function(this,id)
-                local entry = this.entries[id]
-
-                return setmetatable(entry,module_registry_entry):__build()
-            end
-        },__tostring=function() return "module_registry" end
-    }
-
-    local object_registry_methods = {
-        __index=object.new{
-            new_entry=function(this,name)
-
-                log("Created new object registry entry -> "..name)
-                log:dump()
-
-                local id = ENV.utils.generic.uuid4()
-
-                local dat = {}
-                dat.__rest = {name=name,entries={},entry_lookup=dat,name_lookup={},metadata={},file_handlers={}}
-
-                this.entries[id] = dat
-                this.entry_lookup[name] = id
-
-                return setmetatable(dat,object_registry_entry):__build()
-            end,
-            get=function(this,id)
-                local entry = this.entries[id]
-
-                return setmetatable(entry,object_registry_entry):__build()
-            end
-        },__tostring=function() return "object_registry" end
-    }
-
-    local thread_registry_methods = {
-        __index=object.new{
-            set_entry=function(this,registry_entry,value)
-                log("Created new thread registry entry -> "..registry_entry.name,log.info)
-
-                this.entries     [registry_entry.id]   = value
-                this.entry_lookup[registry_entry.name] = registry_entry
-                this.name_lookup [registry_entry.id]   = registry_entry.name
-            end,
-        },__tostring=function() return "thread_registry" end
-    }
-
-    BUS.registry.module_registry = setmetatable({entries={},entry_lookup={}},module_registry_methods):__build()
-    BUS.registry.object_registry = setmetatable({entries={},entry_lookup={}},object_registry_methods):__build()
-    BUS.registry.thread_registry = setmetatable({entries={},entry_lookup={},name_lookup={}},thread_registry_methods):__build()
-    BUS.registry.plugin_registry = setmetatable({entries={},entry_lookup={}},{})
     log("[ Loaded plugin system ]",log.success)
     log("")
 

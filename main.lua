@@ -20,7 +20,7 @@ return function(ENV,libdir,...)
 
     local log = BUS.log
 
-    BUS.plugin_internal = require("core.plugin_api").init(BUS)
+    BUS.plugin_internal = require("core.plugin.internal_api").init(BUS)
     log("[ Inicialized plugin api ]",log.info)
 
     local function start_execution(program,path,terminal,parent,ox,oy)
