@@ -1,8 +1,6 @@
 local strings = {}
 
 function strings.wrap(str,lenght,nnl)
-    expect(1,str,"string")
-    expect(2,lenght,"number")
     local words,out,outstr = {},{},""
     for c in str:gmatch("[%w%p%a%d]+%s?") do table.insert(words,c) end
     if lenght == 0 then return "" end
