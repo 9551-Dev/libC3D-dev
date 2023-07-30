@@ -529,7 +529,6 @@ function body(tokens, start, indent, res)
 end
 
 local function format(text)
-    assert((loadstring or load)(text))
     local res = {str = "", comment = ""}
     body(lex(text, 1, true), 1, 0, res)
     return res.str

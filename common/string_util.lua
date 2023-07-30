@@ -81,4 +81,10 @@ function strings.format_table__tostring(tbl)
     return str:gsub(";% $","") .. ">"
 end
 
+function strings.interpolate(str)
+    return function(data)
+        return str:gsub("<(.-)>",data)
+    end
+end
+
 return strings

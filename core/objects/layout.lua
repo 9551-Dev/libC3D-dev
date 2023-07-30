@@ -1,5 +1,6 @@
 local parse = require("common.parser_util")
 local tbl   = require("common.table_util")
+local str   = require("common.string_util")
 
 local tampl = require("lib.tampl")
 
@@ -98,18 +99,31 @@ return {add=function(BUS)
                         local attribute_sub_name = attribute_info.sub_names[sub_attribute]
 
                         if attribute_info.type == FACE_ATTRIBUTE then
-                            data_getter.inject(data_getter._attribute_getter,tampl.At("HEAD"),tampl.compile_code(([[
-                                local %s_%s_%s = geometry.cast.generated[%d + c3d_triangle_index*%d]
-                            ]]):format(attribute_type,attribute_name,attribute_sub_name,attribute_index,total_attributes)))
+                            data_getter.inject(data_getter._attribute_getter,tampl.At("HEAD"),tampl.compile_code(str.interpolate([[
+                                local <type>_<atname>_<subname> = c3d_casted_geometry_source[<attr_idx> + c3d_triangle_index*<tot_attr>]
+                            ]]){
+                                type     = attribute_type,
+                                atname   = attribute_name,
+                                subname  = attribute_sub_name,
+                                attr_idx = attribute_index,
+                                tot_attr = total_attributes
+                            }))
 
                             attribute_index = attribute_index + 1
                         elseif attribute_info.type == VERTEX_ATTRIBUTE then
                             for vertex_index=1,3 do
                                 local vertex_name = vertex_names[vertex_index]
 
-                                data_getter.inject(data_getter._attribute_getter,tampl.At("HEAD"),tampl.compile_code(([[
-                                    local %s_%s_%s_%s = geometry.cast.generated[%d + c3d_triangle_index*%d]
-                                ]]):format(attribute_type,vertex_name,attribute_name,attribute_sub_name,attribute_index,total_attributes)))
+                                data_getter.inject(data_getter._attribute_getter,tampl.At("HEAD"),tampl.compile_code(str.interpolate([[
+                                    local <type>_<vname>_<atname>_<subname> = c3d_casted_geometry_source[<attr_idx> + c3d_triangle_index*<tot_attr>]
+                                ]]){
+                                    type     = attribute_type,
+                                    vname    = vertex_name,
+                                    atname   = attribute_name,
+                                    subname  = attribute_sub_name,
+                                    attr_idx = attribute_index,
+                                    tot_attr = total_attributes
+                                }))
 
                                 attribute_index = attribute_index + 1
                             end

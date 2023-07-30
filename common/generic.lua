@@ -1,3 +1,4 @@
+---@diagnostic disable: need-check-nil
 local generic = {}
 function generic.uuid4()
     local random = math.random
@@ -34,6 +35,30 @@ function generic.piece_string(str)
         out[n] = c
     end)
     return out
+end
+
+function generic.make_package_file_reader(lib_package)
+    return {get_data_path=function(path)
+        local identifier = ("__c3d_file_%s"):format(path)
+        if lib_package.loaded[identifier] or lib_package.preload[identifier] then
+            return lib_package.loaded[identifier] or lib_package.preload[identifier]
+        else
+            local found_file,err = lib_package.searchpath(path,lib_package.path)
+
+            if not err then
+                local file_handle = fs.open(found_file,"r")
+
+                local data = file_handle.readAll()
+
+                lib_package.loaded[identifier] = data
+
+                file_handle.close()
+                return data
+            else
+                error(err,2)
+            end
+        end
+    end}
 end
 
 generic.events_with_cords = {

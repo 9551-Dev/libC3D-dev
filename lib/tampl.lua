@@ -239,7 +239,7 @@ local function make_value(token,token_buffer,token_index)
         out = token:match("^%-%-%[%[(.+)%]%]$") or token:match("^%-%-(.+)")
     elseif token:match("^\".+\"$") or token:match("^%[%[.+%]%]$") then
         out = token:match("^%[%[(.+)%]%]$") or token:match("^\"(.+)\"$")
-    elseif token:match("(%d*%.?%d+)") then
+    elseif tonumber(token) ~= nil then
         out = tonumber(token)
     else out = token end
 
@@ -258,7 +258,7 @@ local function make_type(token)
         out = "comment"
     elseif token:match("^\".+\"$") or token:match("^%[%[.+%]%]$") then
         out = "string"
-    elseif token:match("(%d*%.?%d+)") then
+    elseif tonumber(token) ~= nil then
         out = "number"
     else out = "name" end
 
@@ -346,6 +346,7 @@ local function generate_code_tree(tokens)
                 index = scope_index,
                 parent  = current_scope,
                 keyword = current_token,
+                name    = current_token,
                 entry   = "scope"
             },SCOPE_MT)
 

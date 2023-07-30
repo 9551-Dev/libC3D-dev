@@ -44,4 +44,46 @@ function parse.function_call(call)
     return name,call_args
 end
 
+function parse.function_call_complex(tampl,compiled_tree)
+    local out_data = {}
+    local TMP = {}
+    for k,v in pairs(compiled_tree) do
+        if v.entry == "token" then
+            TMP[1] = v
+            out_data[#out_data+1] = tampl.new_patch_from_compiled(TMP).apply_patches()
+        elseif v.entry == "scope" then
+            out_data[#out_data+1] = tampl.new_patch_from_compiled(v).apply_patches()
+        end
+    end
+
+    return out_data
+end
+
+function parse.head_arguments(data)
+    local bracket_level  = 0
+    local arguments_end  = 1
+
+    local found_first = false
+
+    for i=1,#data do
+        local char = data:sub(i,i)
+
+        if char == "(" then
+            bracket_level = bracket_level + 1
+            found_first = true
+            print("+",bracket_level)
+        elseif char == ")" then
+            bracket_level = bracket_level - 1
+            print("-",bracket_level)
+        end
+
+        if found_first and bracket_level == 0 then
+            arguments_end = i
+            break
+        end
+    end
+
+    return data:sub(arguments_end+1),data:sub(1,arguments_end)
+end
+
 return parse
