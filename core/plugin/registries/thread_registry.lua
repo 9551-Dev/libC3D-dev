@@ -17,5 +17,8 @@ return {attach=function(BUS)
         },__tostring=function() return "thread_registry" end
     }
 
-    BUS.registry.thread_registry = setmetatable({entries={},entry_lookup={},name_lookup={}},thread_registry_methods):__build()
+    local registry_data = setmetatable({entries={},entry_lookup={},name_lookup={}},thread_registry_methods):__build()
+    BUS.registry.thread_registry = registry_data
+
+    return registry_data
 end}

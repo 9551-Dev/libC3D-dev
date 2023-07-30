@@ -1,5 +1,7 @@
 local object = require("core.object")
 
+local str = require("common.string_util")
+
 return {add=function(BUS)
 
     local function attach_register(f,register_name,data)
@@ -7,6 +9,7 @@ return {add=function(BUS)
             [register_name]=data
         },{__index=BUS.ENV})
 
+        ---@diagnostic disable deprecated-function
         return setfenv(f,plugin_env)
     end
 
@@ -16,10 +19,17 @@ return {add=function(BUS)
         end
     end
 
+    local function register_loader(source,provider,register,registry_lookup)
+        if type(source[provider]) == "function" then
+            local entry_loader = attach_register(source[provider],"__reg",registry_lookup)
+            BUS.plugin[register][source.order][source.id] = entry_loader
+        end
+    end
+
     local plugin_methods = {
         __index = object.new{
             register=function(this)
-                BUS.log("Registering plugin -> " .. this.PLUGID,BUS.log.debug)
+                BUS.log(str.interpolate("Registering plugin -> <plugin_id>"){plugin_id=this.PLUGID},BUS.log.debug)
                 BUS.log:dump()
 
                 register_plugin_trigger(this,"frame_finished",  "frame_finished")
@@ -28,18 +38,20 @@ return {add=function(BUS)
                 register_plugin_trigger(this,"post_frame",      "post_frame")
                 register_plugin_trigger(this,"pre_frame",       "pre_frame")
 
-                if type(this.register_objects) == "function" then
-                    local oload = attach_register(this.register_objects,"OBJECT",BUS.registry.object_registry.entry_lookup)
-                    BUS.plugin.objects[this.order][this.id] = oload
-                end
-                if type(this.register_modules) == "function" then
-                    local mload = attach_register(this.register_modules,"MODULE",BUS.registry.module_registry.entry_lookup)
-                    BUS.plugin.modules[this.order][this.id] = mload
-                end
-                if type(this.register_threads) == "function" then
-                    BUS.plugin.threads[this.order][this.id] = this.register_threads
-                end
+                local registry_lookup = {
+                    OBJECT    = BUS.registry.object_registry   .entry_lookup,
+                    MODULE    = BUS.registry.module_registry   .entry_lookup,
+                    THREAD    = BUS.registry.thread_registry   .entry_lookup,
+                    MACRO     = BUS.registry.macro_registry    .entry_lookup,
+                    COMPONENT = BUS.registry.component_registry.entry_lookup
+                }
 
+                register_loader(this,"register_objects","objects",registry_lookup)
+                register_loader(this,"register_modules","modules",registry_lookup)
+                register_loader(this,"register_threads","threads",registry_lookup)
+
+                register_loader(this,"register_macros"    ,"macros",    registry_lookup)
+                register_loader(this,"register_components","components",registry_lookup)
             end,
             set_load_order=function(this,n)
                 this.order = n

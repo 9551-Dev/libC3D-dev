@@ -1,4 +1,10 @@
-return {attach=function(BUS)
+local object = require("core.object")
 
-    BUS.registry.macro_registry = setmetatable({entries={},entry_lookup={}},macro_registry_methods):__build()
+return {attach=function(BUS)
+    local macro_registry_methods = {__index=object.new{}}
+
+    local registry_data = setmetatable({entries={},entry_lookup={}},macro_registry_methods):__build()
+    BUS.registry.macro_registry = registry_data
+
+    return registry_data
 end}

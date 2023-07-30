@@ -114,11 +114,12 @@ return {register_bus=function(ENV)
         if next(val) then log("",log.debug) end
     end
     printout(1,BUS)
+
     log("",log.info)
 
     init_registries.for_bus(BUS)
 
-    log("[ Loaded plugin system ]",log.success)
+    log("[ Loaded registries ]",log.success)
     log("")
 
     log:dump()

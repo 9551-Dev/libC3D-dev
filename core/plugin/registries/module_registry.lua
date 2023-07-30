@@ -1,3 +1,7 @@
+local object = require("core.object")
+
+local generic = require("common.generic")
+
 return {attach=function(BUS)
     local log = BUS.log
 
@@ -20,7 +24,7 @@ return {attach=function(BUS)
                 log("Created new module registry entry -> "..name)
                 log:dump()
 
-                local id = ENV.utils.generic.uuid4()
+                local id = generic.uuid4()
 
                 local dat = {}
                 dat.__rest = {name=name,entries={},entry_lookup=dat,name_lookup={}}
@@ -38,5 +42,8 @@ return {attach=function(BUS)
         },__tostring=function() return "module_registry" end
     }
 
-    BUS.registry.module_registry = setmetatable({entries={},entry_lookup={}},module_registry_methods):__build()
+    local registry_data = setmetatable({entries={},entry_lookup={}},module_registry_methods):__build()
+    BUS.registry.module_registry = registry_data
+
+    return registry_data
 end}
