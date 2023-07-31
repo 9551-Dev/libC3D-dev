@@ -53,26 +53,35 @@ function tbls.createNDarray(n, tbl)
     return tbl
 end
 
-function tbls.deepcopy(tbl,keep)
-    local instance_seen = {}
-    if not keep then keep = {} end
-    local function copy(tbl)
-        local out = {}
-        instance_seen[tbl] = out
-        for k,v in pairs(tbl) do
-            local t = type(v) == "table" and not keep[k]
-            if type(k) == "table" then k = copy(k) end
-            if t and not instance_seen[v] then
-                local new_instance = copy(v)
-                instance_seen[v] = new_instance
-                out[k] = new_instance
-            elseif t and instance_seen[v] then
-                out[k] = instance_seen[v]
-            else out[k] = v end
+function tbls.deepcopy(tbl,keep,seen)
+    local instance_seen = seen or {}
+    local out = {}
+    instance_seen[tbl] = out
+    for copied_key,copied_value in pairs(tbl) do
+        local is_table = type(copied_value) == "table" and not keep[copied_key]
+
+        if type(copied_key) == "table" then
+            if instance_seen[copied_key] then
+                copied_key = instance_seen[copied_key]
+            else
+                local new_instance = tbls.deepcopy(copied_key,keep,instance_seen)
+                instance_seen[copied_key] = new_instance
+                copied_key = new_instance
+            end
         end
-        return out
+
+        if is_table and not instance_seen[copied_value] then
+            local new_instance = tbls.deepcopy(copied_value,keep,instance_seen)
+            instance_seen[copied_value] = new_instance
+            out[copied_key] = new_instance
+        elseif is_table and instance_seen[copied_value] then
+            out[copied_key] = instance_seen[copied_value]
+        else
+            out[copied_key] = copied_value
+        end
     end
-    return copy(tbl)
+
+    return setmetatable(out,getmetatable(tbl))
 end
 
 function tbls.copy(tbl)
