@@ -1,6 +1,4 @@
-local tbl = require("common.table_util")
-
-local empty = {}
+local str = require("common.string_util")
 
 local function make_methods(child)
     return setmetatable({
@@ -8,8 +6,8 @@ local function make_methods(child)
             child = obj
             return obj
         end,
-        type = function() return child.obj_type or tostring(child) end,
-    },{__tostring=function() return "object" end})
+        get_type = function() return (getmetatable(child) or {__type=tostring(child)}).__type or tostring(child) end,
+    },{__tostring=function() return str.format_table__tostring(child) end})
 end
 
 return {new=function(child)

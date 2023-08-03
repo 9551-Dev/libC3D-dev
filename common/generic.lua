@@ -53,7 +53,7 @@ function generic.make_package_file_reader(lib_package)
                 lib_package.loaded[identifier] = data
 
                 file_handle.close()
-                return data
+                return data,found_file
             else
                 error(err,2)
             end

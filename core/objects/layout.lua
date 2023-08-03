@@ -186,7 +186,7 @@ return {add=function(BUS)
             layout_object:constructor(function()
                 return {
                     layout_attributes = {__n=0},
-                    generated        = {}
+                    generated         = {}
                 }
             end)
         end

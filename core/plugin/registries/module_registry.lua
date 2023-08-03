@@ -3,6 +3,8 @@ local object = require("core.object")
 local generic = require("common.generic")
 local str     = require("common.string_util")
 
+local plugin_helper = require("core.plugin.helper")
+
 return {attach=function(BUS)
     local log = BUS.log
 
@@ -14,11 +16,9 @@ return {attach=function(BUS)
                     name =registry_entry.name
                 },log.debug)
 
-                this.__rest.entries     [registry_entry.id]   = value
-                this.__rest.entry_lookup[registry_entry.name] = registry_entry
-                this.__rest.name_lookup [registry_entry.id]   = registry_entry.name
+                plugin_helper.set_registry_entry(this,registry_entry,value)
             end,
-        },__tostring=function() return "module_registry_entry" end
+        },__type="test",__tostring=function(self) return str.format_table__tostring(self) end
     }
 
     local module_registry_methods = {
@@ -43,11 +43,13 @@ return {attach=function(BUS)
 
                 return setmetatable(entry,module_registry_entry):__build()
             end
-        },__tostring=function() return "module_registry" end
+        },__tostring=function(self) return str.format_table__tostring(self) end
     }
 
     local registry_data = setmetatable({entries={},entry_lookup={}},module_registry_methods):__build()
     BUS.registry.module_registry = registry_data
+
+    _G.reg = registry_data
 
     return registry_data
 end}

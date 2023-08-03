@@ -59,7 +59,7 @@ return function(BUS)
                 log_api("",typ)
             end)
 
-            log_module:set_entry(c3d.registry.entry("type"),log_types)
+            log_module:set_entry(c3d.registry.entry("type"),function() end)
         end
 
         log:register()

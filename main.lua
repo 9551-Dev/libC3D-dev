@@ -75,15 +75,15 @@ return function(ENV,libdir,...)
         end
         log("Filled screenbuffer",log.debug)
 
+        ENV.package.path = BUS.instance.package.scenepak
+
         log("Attempting to load given program",log.info)
         if type(program[1]) == "function" then
-            ENV.package.path = BUS.instance.package.scenepak
-            BUS.plugin_internal.load_registered_modules()
-            BUS.plugin_internal.load_registered_objects()
             local program_main = setfenv(program[1],ENV)
             local ok,err = pcall(function()
                 program_main(table.unpack(args,1,args.n))
             end)
+
             if ok then
                 log("Succesfully loaded program",log.success)
             else
@@ -106,27 +106,18 @@ return function(ENV,libdir,...)
                 log("[ C3D INIT LOAD ERROR ] -> "..err,log.error)
             end
 
-            BUS.plugin_internal.register_modules()
-            BUS.plugin_internal.register_objects()
-            BUS.plugin_internal.register_threads()
+            BUS.c3d.plugin.register()
+            BUS.c3d.plugin.load_registered()
+            BUS.c3d.plugin.refinalize()
             log("Successfuly registered plugins",log.success)
             log:dump()
         end
 
         local main   = update_thread.make(ENV,BUS,args)
-        local event  = event_thread .make(ENV,BUS,args)
+        local event  = event_thread .make(ENV,BUS)
         local resize = resize_thread.make(ENV,BUS,function() return BUS.graphics.screen_parent end)
         local key_h  = key_thread   .make(ENV,BUS)
         local tudp   = tudp_thread  .make(ENV,BUS)
-
-        if type(ENV.c3d.init) == "function" then
-            BUS.plugin_internal.load_registered_modules()
-            BUS.plugin_internal.load_registered_objects()
-            BUS.plugin_internal.load_registered_threads()
-        end
-
-        BUS.plugin_internal.finalize_load ()
-        BUS.plugin_internal.load_overrides()
         log("Finished plugin loading.",log.success)
 
         log("[ Resuming and getting data from the loaded program ]",log.info)
@@ -195,12 +186,12 @@ return function(ENV,libdir,...)
     end
 
     log("[ Loading plugin api modules.. ]",log.info)
-    log("",log.info)
     ENV.c3d.plugin   = require("modules.plugin")  (BUS,ENV)
     ENV.c3d.registry = require("modules.registry")(BUS)
     log("[ Loading plugin api objects.. ]",log.info)
     BUS.object.registry_entry = require("core.objects.registry_entry").add(BUS)
     BUS.object.plugin         = require("core.objects.plugin")        .add(BUS)
+    log("",log.info)
 
     log("[ Loading internal objects.. ]",log.info)
     ENV.c3d.plugin.load(require("core.objects.palette")         .add(BUS))

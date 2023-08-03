@@ -14,7 +14,7 @@ return {attach=function(BUS)
                 this.entry_lookup[registry_entry.name] = registry_entry
                 this.name_lookup [registry_entry.id]   = registry_entry.name
             end,
-        },__tostring=function() return "thread_registry" end
+        },__tostring=function(self) return str.format_table__tostring(self) end
     }
 
     local registry_data = setmetatable({entries={},entry_lookup={},name_lookup={}},thread_registry_methods):__build()
