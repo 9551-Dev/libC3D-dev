@@ -3,7 +3,7 @@ local str = require("common.string_util")
 return {set_registry_entry=function(register,registry_entry,value)
     if register.__rest.entry_lookup[registry_entry.name] and not registry_entry.forceful_override then
         error(str.interpolate("Tried to override existing registry entry $<group> -> $<name>, use the \"override\" entry flag"){
-            group = this.__rest.name,
+            group = register.__rest.name,
             name  = registry_entry.name
         },3)
     elseif registry_entry.forceful_override then

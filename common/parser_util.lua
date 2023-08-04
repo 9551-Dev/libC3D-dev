@@ -44,6 +44,10 @@ function parse.function_call(call)
     return name,call_args
 end
 
+function parse.iterate_filtered_calls(source,filter)
+    return source:gmatch(filter .. "([%w_%.:]+)%((.-)%)")
+end
+
 function parse.function_call_complex(tampl,compiled_tree)
     local out_data = {}
     local TMP = {}
@@ -71,10 +75,8 @@ function parse.head_arguments(data)
         if char == "(" then
             bracket_level = bracket_level + 1
             found_first = true
-            print("+",bracket_level)
         elseif char == ")" then
             bracket_level = bracket_level - 1
-            print("-",bracket_level)
         end
 
         if found_first and bracket_level == 0 then

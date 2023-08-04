@@ -2,6 +2,8 @@ local plugin = {}
 
 local generic = require("common.generic")
 
+local str = require("common.string_util")
+
 return function(BUS,ENV)
     local file_reader = generic.make_package_file_reader(BUS.ENV.package)
 
@@ -25,7 +27,7 @@ return function(BUS,ENV)
         if type(settings) == "table" and settings.from_file then
             local source_string,source_path = file_reader.get_data_path(source)
 
-            source_function = load(source_string,source_path,"t",{})
+            source_function = load(source_string,str.interpolate("=$<path>"){path=source_path},"t",{})
         else
             source_function = source
         end

@@ -364,6 +364,21 @@ end
 
 local function format_code_block(code)
     return code_formatter.format(code)
+    --return code
+end
+
+local function generate_code(tree,is_layer)
+    local code = ""
+
+    for k,v in ipairs(tree) do
+        if v.entry == "scope" then
+            code = code .. generate_code(v,true) .. "\n"
+        else
+            code = code .. v.name .. (v.type == "comment" and "\n" or " ")
+        end
+    end
+
+    return is_layer and code or format_code_block(code)
 end
 
 local function load_template_tree(tree)
@@ -393,17 +408,7 @@ local function load_template_tree(tree)
             return object
         end,
         apply_patches=function(input)
-            local code = ""
-
-            for k,v in ipairs(input or tree) do
-                if v.entry == "scope" then
-                    code = code .. object.apply_patches(v) .. "\n"
-                else
-                    code = code .. v.name .. (v.type == "comment" and "\n" or " ")
-                end
-            end
-
-            return format_code_block(code)
+            return generate_code(input or tree)
         end,
         rebuild = function()
             local reconstructed = load_template_tree(tree)
@@ -432,6 +437,10 @@ end
 
 local function load_template_tokens(tokens)
     return load_template_tree(generate_code_tree(tokens))
+end
+
+local function generate_from_tokens(tokens,block_format)
+    return generate_code(generate_code_tree(tokens),block_format)
 end
 
 local function load_template(data)
@@ -463,7 +472,10 @@ return {
     new_patch_from_file     = load_template_file,
     new_patch_from_tokens   = load_template_tokens,
     new_patch_from_compiled = load_template_tree,
+    generate_from_tokens    = generate_from_tokens,
+    generate_from_tree      = generate_code,
     compile_code            = parse_code_block,
+    tokenize_source         = generate_tokens,
     At                      = inject_table_position,
     format_code             = format_code_block
 }

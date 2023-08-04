@@ -6,7 +6,7 @@ local object = require("core.object")
 
 local tampl = require("lib.tampl")
 
-return function(c3d)
+return function()
     local null_injection = tampl.compile_code("NULL")
 
     local macro_util_object = {
@@ -14,10 +14,14 @@ return function(c3d)
             tampl       =tampl,
             compile     =tampl.compile_code,
             make_varname=function(self,name)
-                return ("%s_macro_%s_%s"):format(name,self.name,self.macro_id)
+                return strutil.interpolate("$<varname>_macro_$<macro_name>_$<macro_id>"){
+                    varname    = name,
+                    macro_name = self.name,
+                    macro_id   = self.macro_id
+                }
             end,
             wrap_doend=function(self,str)
-                return ("do\n%s\nend"):format(str)
+                return strutil.interpolate("do\n$<code>\nend"){code=str}
             end,
             stitch=function(...)
                 local data = {...}
