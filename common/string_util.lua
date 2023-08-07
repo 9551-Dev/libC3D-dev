@@ -80,4 +80,12 @@ function strings.interpolate(str)
     end
 end
 
+function strings.depattern(str)
+    return str:gsub("[%[%]%(%)%.%+%-%%%$%^%*%?]","%%%1")
+end
+
+function strings.replace(str,old,new)
+    return str:gsub(str.depattern(old),str.depattern(new))
+end
+
 return strings

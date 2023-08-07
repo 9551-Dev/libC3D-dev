@@ -88,4 +88,48 @@ function parse.head_arguments(data)
     return data:sub(arguments_end+1),data:sub(1,arguments_end)
 end
 
+function parse.block(data,from,opener,closer)
+    local block_level  = 0
+
+    local block_start = 1
+    local block_end   = 1
+
+    local found_first = false
+
+    for i=from,#data do
+        local char = data[i]
+
+        if char == opener then
+            block_level = block_level + 1
+
+            if not found_first then
+                block_start = i
+            end
+
+            found_first = true
+        elseif char == closer then
+            block_level = block_level - 1
+        end
+
+        if found_first and block_level == 0 then
+            block_end = i
+            break
+        end
+    end
+
+    return block_start,block_end
+end
+
+function parse.match_from_call(source)
+    return source:match("()([%w_%.:]+()%(.-%).+)$")
+end
+
+function parse.stringify_call_arg1(str)
+    return str:gsub("^(%s-%(%s-)(function%s-%(.-%))",function(a,b)
+        return a .. "[["
+    end):gsub("(.*)end(.-)$",function(a,b)
+        return a .. "]]" .. b
+    end),str:match("^%s-%(%s-(function%s-%(.-%))")
+end
+
 return parse

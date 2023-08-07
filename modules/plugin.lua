@@ -4,6 +4,8 @@ local generic = require("common.generic")
 
 local str = require("common.string_util")
 
+local plugin_helper = require("core.plugin.helper")
+
 return function(BUS,ENV)
     local file_reader = generic.make_package_file_reader(BUS.ENV.package)
 
@@ -23,9 +25,22 @@ return function(BUS,ENV)
             plugin = plugin_factory
         },{__index=ENV})
 
-        local source_function
+        local source_function,entry_points
         if type(settings) == "table" and settings.from_file then
             local source_string,source_path = file_reader.get_data_path(source)
+
+            if type(settings.component_prefix) == "string" then
+                source_string,entry_points = plugin_helper.patch_plugin_file(source_string,settings.component_prefix)
+
+                for i=1,#entry_points do
+                    plugin_env[entry_points[i]] = function(source)
+                        BUS.log(str.interpolate("Registered entrypoint $<entry> with source \n$<source>"){
+                            entry  = entry_points[i],
+                            source = source
+                        })
+                    end
+                end
+            end
 
             source_function = load(source_string,str.interpolate("=$<path>"){path=source_path},"t",{})
         else
