@@ -1,6 +1,7 @@
 local init_registries = require("core.plugin.load_registries")
 
 return {register_bus=function(ENV)
+
     local BUS = {
         timer={last_delta=0,temp_delta=0},
         c3d=ENV.c3d,
@@ -90,6 +91,8 @@ return {register_bus=function(ENV)
         mem={},
         m_n=0
     }
+
+    ENV.c3d.__bus = BUS
 
     local log = require("lib.logger").create_log(BUS)
 

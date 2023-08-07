@@ -34,10 +34,11 @@ return function(BUS,ENV)
 
                 for i=1,#entry_points do
                     plugin_env[entry_points[i]] = function(source)
-                        BUS.log(str.interpolate("Registered entrypoint $<entry> with source \n$<source>"){
+                        --[[BUS.log(str.interpolate("Registered entrypoint $<entry> with source \n$<source>"){
                             entry  = entry_points[i],
                             source = source
-                        })
+                        })]]
+                        return str
                     end
                 end
             end
