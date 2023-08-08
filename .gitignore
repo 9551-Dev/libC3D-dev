@@ -17,3 +17,6 @@
 
 # diff
 diff.txt
+
+# direnv
+.direnv
