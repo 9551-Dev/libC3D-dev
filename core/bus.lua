@@ -64,6 +64,7 @@ return {register_bus=function(ENV)
 
             scheduled_overrides=ENV.utils.table.createNDarray(1),
 
+            component_sources = {},
             plugin_bus={}
         },
         registry={

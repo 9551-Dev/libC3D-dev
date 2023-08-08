@@ -104,6 +104,30 @@ return {init=function(BUS)
         end
     end
 
+    function methods.register_components()
+        BUS.log("[ Registering loaded components.. ]",BUS.log.info)
+        for k,v in tbl.iterate_order(BUS.plugin.components) do
+            for id,loader in pairs(v) do
+                BUS.plugin.components[k][id] = nil
+                local ok,err = pcall(loader,0)
+
+                if not ok then
+                    BUS.log("Error registering component. " ..tostring(err),BUS.log.error)
+                end
+            end
+        end
+    end
+
+    function methods.load_registered_components()
+        BUS.log("[ Loading registered components ]",BUS.log.info)
+        local bus_component_data = BUS.registry.component_registry
+
+        for component,entry_id in pairs(bus_component_data.entry_lookup) do
+            local component_entry = bus_component_data[entry_id]
+
+        end
+    end
+
     function methods.finalize_load()
         BUS.log("Finalizing plugin loading..",BUS.log.info)
         for k,v in pairs(BUS.triggers.on_full_load) do

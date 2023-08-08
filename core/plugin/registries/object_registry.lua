@@ -44,7 +44,7 @@ return {attach=function(BUS)
         __index=object.new{
             new_entry=function(this,name)
 
-                log(str.interpolate("Created new object registry entry -> $<name>"){name=name})
+                log(str.interpolate("Created new object registry entry -> $<name>"){name=name},log.info)
                 log:dump()
 
                 local id = generic.uuid4()

@@ -34,11 +34,7 @@ return function(BUS,ENV)
 
                 for i=1,#entry_points do
                     plugin_env[entry_points[i]] = function(source)
-                        --[[BUS.log(str.interpolate("Registered entrypoint $<entry> with source \n$<source>"){
-                            entry  = entry_points[i],
-                            source = source
-                        })]]
-                        return str
+                        BUS.plugin.component_sources[entry_points[i]] = source
                     end
                 end
             end
@@ -62,7 +58,7 @@ return function(BUS,ENV)
         BUS.plugin_internal.register_modules()
         BUS.plugin_internal.register_objects()
         BUS.plugin_internal.register_threads()
-        --BUS.plugin_internal.register_components()
+        BUS.plugin_internal.register_components()
     end
 
     function plugin.load_registered()
@@ -70,7 +66,7 @@ return function(BUS,ENV)
         BUS.plugin_internal.load_registered_modules()
         BUS.plugin_internal.load_registered_objects()
         BUS.plugin_internal.load_registered_threads()
-        --BUS.plugin_internal.load_registered_components()
+        BUS.plugin_internal.load_registered_components()
     end
 
     function plugin.refinalize()

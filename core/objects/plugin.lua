@@ -39,19 +39,30 @@ return {add=function(BUS)
                 register_plugin_trigger(this,"pre_frame",       "pre_frame")
 
                 local registry_lookup = {
-                    OBJECT    = BUS.registry.object_registry   .entry_lookup,
-                    MODULE    = BUS.registry.module_registry   .entry_lookup,
-                    THREAD    = BUS.registry.thread_registry   .entry_lookup,
-                    MACRO     = BUS.registry.macro_registry    .entry_lookup,
-                    COMPONENT = BUS.registry.component_registry.entry_lookup
+                    register_objects = {
+                        OBJECT = BUS.registry.object_registry.entry_lookup,
+                    },
+                    register_modules = {
+                        MODULE = BUS.registry.module_registry.entry_lookup
+                    },
+                    register_threads = {
+                        THREAD = BUS.registry.thread_registry.entry_lookup,
+                    },
+                    register_components = {
+                        MACRO     = BUS.registry.macro_registry    .entry_lookup,
+                        COMPONENT = BUS.registry.component_registry.entry_lookup
+                    },
+                    register_macros = {
+                        MACRO = BUS.registry.macro_registry.entry_lookup
+                    }
                 }
 
-                register_loader(this,"register_objects","objects",registry_lookup)
-                register_loader(this,"register_modules","modules",registry_lookup)
-                register_loader(this,"register_threads","threads",registry_lookup)
+                register_loader(this,"register_objects","objects",registry_lookup.register_objects)
+                register_loader(this,"register_modules","modules",registry_lookup.register_modules)
+                register_loader(this,"register_threads","threads",registry_lookup.register_threads)
 
-                register_loader(this,"register_macros"    ,"macros",    registry_lookup)
-                register_loader(this,"register_components","components",registry_lookup)
+                register_loader(this,"register_macros"    ,"macros",    registry_lookup.register_macros    )
+                register_loader(this,"register_components","components",registry_lookup.register_components)
             end,
             set_load_order=function(this,n)
                 this.order = n
