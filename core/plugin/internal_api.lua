@@ -125,6 +125,7 @@ return {init=function(BUS)
         for component,entry_id in pairs(bus_component_data.entry_lookup) do
             local component_entry = bus_component_data[entry_id]
 
+            BUS.log("Loading component"..component)
         end
     end
 

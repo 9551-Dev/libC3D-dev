@@ -22,10 +22,13 @@ return function(BUS)
     function registry.get_thread_registry()
         return BUS.registry.thread_registry
     end
+    function registry.get_component_registry()
+        return BUS.registry.component_registry
+    end
 
     function registry.entry(name,value)
         return BUS.object.registry_entry.new(name,value)
     end
-    
+
     return registry
 end
