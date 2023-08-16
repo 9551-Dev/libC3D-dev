@@ -63,9 +63,37 @@ function strings.ensure_line_size(str,width)
     return result_str
 end
 
+
+function strings.function_usage(f)
+    local fArgs = ""
+    if type(f) == "function" then
+        local info = debug.getinfo(f, "u")
+        local params = info.nparams
+        if info.isvararg and params == 0 then
+            fArgs = "(...)"
+        else
+            for i = 1, params do
+                local param = debug.getlocal(f, i) or ""
+                fArgs = fArgs .. param .. (i == params and "" or ", ")
+            end
+            if info.isvararg then
+                fArgs = fArgs .. ", ..."
+            end
+            fArgs = "(" .. fArgs .. ")"
+        end
+    else
+        fArgs = " " .. tostring(f)
+    end
+    return fArgs
+end
+
 function strings.format_table__tostring(tbl)
     local str = "<"
     for k,v in next,tbl do
+        if type(v) == "function" then
+            v = "function" .. strings.function_usage(v)
+        end
+
         str = str .. ("%s=%s; "):format(tostring(k),tostring(v))
     end
 

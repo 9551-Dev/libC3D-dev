@@ -55,7 +55,7 @@ return {init=function(BUS)
             local object_entry = busmoddata.entries[entry_id]
             local metatable = {__index=object.new{},__tostring=function(this)
                 return ("%s[OBJECT]%s"):format(object_name,string_util.format_table__tostring(this))
-            end}
+            end,__type=object_name:upper()}
 
             local methods = metatable.__index
             for k,v in pairs(object_entry.__rest.metadata) do metatable[k] = v end
@@ -104,12 +104,36 @@ return {init=function(BUS)
         end
     end
 
+    function methods.register_macros()
+        BUS.log("[ Registering loaded macros.. ]",BUS.log.info)
+        for k,v in tbl.iterate_order(BUS.plugin.macros) do
+            for id,loader in pairs(v) do
+                BUS.plugin.macros[k][id] = nil
+                local ok,err = pcall(loader,0)
+
+                if not ok then
+                    BUS.log("Error registering macro. " ..tostring(err),BUS.log.error)
+                end
+            end
+        end
+    end
+    function methods.load_registered_macros()
+        BUS.log("[ Loading registered macros ]",BUS.log.info)
+        local bus_macro_data = BUS.registry.macro_registry
+
+        for component,entry_id in pairs(bus_macro_data.entry_lookup) do
+            local macro_entry = bus_macro_data.entries[entry_id]
+
+            --BUS.log("Loading macro"..macro)
+        end
+    end
+
     function methods.register_components()
         BUS.log("[ Registering loaded components.. ]",BUS.log.info)
         for k,v in tbl.iterate_order(BUS.plugin.components) do
             for id,loader in pairs(v) do
                 BUS.plugin.components[k][id] = nil
-                local ok,err = pcall(loader,0)
+                local ok,err = pcall(loader)
 
                 if not ok then
                     BUS.log("Error registering component. " ..tostring(err),BUS.log.error)
@@ -117,15 +141,16 @@ return {init=function(BUS)
             end
         end
     end
-
     function methods.load_registered_components()
         BUS.log("[ Loading registered components ]",BUS.log.info)
         local bus_component_data = BUS.registry.component_registry
 
         for component,entry_id in pairs(bus_component_data.entry_lookup) do
-            local component_entry = bus_component_data[entry_id]
+            local component_entry = bus_component_data.entries[entry_id]
 
-            BUS.log("Loading component"..component)
+            component_entry.source_plugin = BUS.registry.plugin_registry.entries[component_entry.source_plugin_id]
+
+            BUS.log("Loading component "..component)
         end
     end
 

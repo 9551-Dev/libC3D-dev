@@ -16,6 +16,11 @@ local utils = {
     parse=require("common.parser_util")
 }
 
+local strips
+pcall(function()
+    strips = require("strips")
+end)
+
 local runtime_env = setmetatable({
     c3d={},
     utils=utils
@@ -25,4 +30,4 @@ local ok,err = pcall(require("main"),runtime_env,selfDir,...)
 
 package.path = old_path
 
-return {init_ok=ok,env=err,util=utils}
+return {init_ok=ok,env=err,util=utils,strips=strips}

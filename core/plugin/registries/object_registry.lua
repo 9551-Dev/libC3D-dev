@@ -42,7 +42,7 @@ return {attach=function(BUS)
 
     local object_registry_methods = {
         __index=object.new{
-            new_entry=function(this,name)
+            new_entry = function(this,name)
 
                 log(str.interpolate("Created new object registry entry -> $<name>"){name=name},log.info)
                 log:dump()
@@ -57,11 +57,12 @@ return {attach=function(BUS)
 
                 return setmetatable(dat,object_registry_entry):__build()
             end,
-            get=function(this,id)
+            get = function(this,id)
                 local entry = this.entries[id]
 
                 return setmetatable(entry,object_registry_entry):__build()
-            end
+            end,
+            bind = plugin_helper.bind
         },__tostring=function(self) return str.format_table__tostring(self) end
     }
 

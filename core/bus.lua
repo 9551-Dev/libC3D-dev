@@ -65,6 +65,7 @@ return {register_bus=function(ENV)
             scheduled_overrides=ENV.utils.table.createNDarray(1),
 
             component_sources = {},
+            processed_macros  = {},
             plugin_bus={}
         },
         registry={
@@ -76,21 +77,26 @@ return {register_bus=function(ENV)
             component_registry = setmetatable({},{__tostring=function() return "component_registry" end})
         },
         triggers={
-            overrides       ={},
-            event_listeners ={},
-            paused_listeners={},
+            overrides        = {},
+            event_listeners  = {},
+            paused_listeners = {},
 
-            on_full_load  ={},
-            post_frame    ={},
-            frame_finished={},
-            pre_frame     ={},
-            post_display  ={}
+            on_full_load   = {},
+            post_frame     = {},
+            frame_finished = {},
+            pre_frame      = {},
+            post_display   = {}
         },
-        scene={},
-        camera={},
-        animated_texture={instances={}},
-        mem={},
-        m_n=0
+
+        scene  = {},
+        camera = {},
+
+        animated_texture = {instances={}},
+
+        mem = {},
+        m_n = 0,
+
+        signature = ENV.utils.generic.uuid4()
     }
 
     ENV.c3d.__bus = BUS

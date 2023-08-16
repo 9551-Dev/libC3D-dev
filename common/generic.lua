@@ -61,6 +61,34 @@ function generic.make_package_file_reader(lib_package)
     end}
 end
 
+function generic.curry_function(func)
+    return function(...)
+        local args = {...}
+
+        if #args >= func.args then
+            return func.func(table.unpack(args))
+        else
+            return function (...)
+                local new_args = {...}
+                local combined_args = {}
+
+                for i = 1, #args do
+                    combined_args[i] = args[i]
+                end
+
+                for i = 1, #new_args do
+                    combined_args[#args+i] = new_args[i]
+                end
+
+                return generic.curry_function({
+                    func = func.func,
+                    args = func.args,
+                })(table.unpack(combined_args))
+            end
+        end
+    end
+end
+
 generic.events_with_cords = {
     monitor_touch=true,
     mouse_click=true,

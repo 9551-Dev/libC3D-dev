@@ -1,8 +1,8 @@
 local object = require("core.object")
 
-local generic = require("common.generic")
-
 local str = require("common.string_util")
+
+local plugin_helper = require("core.plugin.helper")
 
 return {attach=function(BUS)
     local log = BUS.log
@@ -18,6 +18,7 @@ return {attach=function(BUS)
                 log(str.interpolate("Created in macro registry entry -> $<name>"){name=registry_entry.name},log.info)
                 log:dump()
 
+
                 local dat = {
                     entry     = registry_entry,
                     processor = processor_function
@@ -32,7 +33,8 @@ return {attach=function(BUS)
                 local entry = this.entries[entry_id]
 
                 return setmetatable(entry,macro_registry_entry):__build()
-            end
+            end,
+            bind = plugin_helper.bind
         },__tostring=function(self) return str.format_table__tostring(self) end
     }
 

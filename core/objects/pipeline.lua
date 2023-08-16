@@ -1,22 +1,10 @@
 local utils = require("common.generic")
 
-local function build_pipeline()
-    local FLOOR,CEIL = math.floor,math.ceil
-
-    return function(this,model,w,h,cam_position,cam_rotation,cam_transform,matrix_perspective,pixel_draw)
-        local cam_position,cam_rotation,cam_transform,matrix_perspective = cam_position,cam_rotation,cam_transform,matrix_perspective
-
-        local geometry          = model.geometry
-        local triangles_indices = geometry.tris
-        local vertices          = geometry.vertices
-        local triangle_count    = #triangles_indices
-
-        -- model render data
-        local model_transform = model.transform
-    end
-end
+local build_pipeline = require("core.pipeline.build")
 
 return {add=function(BUS)
+
+    local pipeline_builder = build_pipeline.init(BUS)
 
     return function()
         local pipeline = plugin.new("c3d:object->pipeline")
@@ -25,11 +13,17 @@ return {add=function(BUS)
             local object_registry = c3d.registry.get_object_registry()
             local pipeline_object = object_registry:new_entry("pipeline")
 
-            local base = build_pipeline()
-            pipeline_object:set_entry(c3d.registry.entry("render"),base)
+            pipeline_object:set_entry(c3d.registry.entry("render"),function() end)
 
             pipeline_object:set_entry(c3d.registry.entry("get_layout"),function(this)
                 return this.layout.object
+            end)
+
+            pipeline_object:set_entry(c3d.registry.entry("compile"),function(self)
+                local pipeline_build = pipeline_builder.build(self)
+
+                pipeline.builds[#pipeline.builds+1] = pipeline_build
+                pipeline.current_build              = pipeline_build
             end)
 
             pipeline_object:constructor(function(layout_source,id_override)
@@ -38,6 +32,7 @@ return {add=function(BUS)
                     layout={
                         object=layout_source
                     },
+                    builds = {},
                     id=id
                 }
 

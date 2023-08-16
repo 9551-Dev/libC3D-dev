@@ -8,7 +8,8 @@ return {add=function(BUS)
 
     local registry_entry_methods = {
         __index = object.new{
-        },__tostring=function(self) return str.format_table__tostring(self) end
+        },__tostring=function(self) return str.format_table__tostring(self) end,
+        __type="registry_entry"
     }
 
     return {new=function(name,flags)

@@ -4,7 +4,7 @@ local parse = require("common.parser_util")
 local tampl = require("lib.tampl")
 
 return {
-    set_registry_entry=function(register,registry_entry,value)
+    set_registry_entry = function(register,registry_entry,value)
         if register.__rest.entry_lookup[registry_entry.name] and not registry_entry.forceful_override then
             error(str.interpolate("Tried to override existing registry entry $<group> -> $<name>, use the \"override\" entry flag"){
                 group = register.__rest.name,
@@ -20,6 +20,11 @@ return {
         register.__rest.entries     [registry_entry.id]   = value
         register.__rest.entry_lookup[registry_entry.name] = registry_entry
         register.__rest.name_lookup [registry_entry.id]   = registry_entry.name
+    end,
+
+    bind = function(register,pointer)
+        register.bound_to = pointer
+        return register
     end,
 
     patch_plugin_file = function(source,f_prefix)
