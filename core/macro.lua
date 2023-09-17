@@ -62,7 +62,10 @@ return function(BUS)
                 local out = ""
 
                 for i=1,vals.n do
-                    out = out .. vals[i] .. ","
+                    local val = vals[i]
+                    if val then
+                        out = out .. val .. ","
+                    end
                 end
 
                 return out:gsub(",$","")
@@ -85,6 +88,16 @@ return function(BUS)
                 end
 
                 return data
+            end,
+            unwrap_string = function(this,str)
+                if str then
+                    return str:match("^.(.+).$")
+                end
+            end,
+            wrap_string = function(this,str)
+                if str then
+                    return ("\"%s\""):format(str)
+                end
             end
         },tampl),__tostring = function(self) return strutil.format_table__tostring(self) end,
         __type = "macro_util"
@@ -170,6 +183,7 @@ return function(BUS)
 
         local macro_injections = {}
         local macro_presence   = {}
+        local check_functions  = {}
         for name,macro in pairs(macros) do
             macro_presence  [name] = 0
             macro_injections[name] = {
@@ -180,7 +194,12 @@ return function(BUS)
 
                 list = {}
             }
+
+            if type(macro.check) == "function" then
+                check_functions[#check_functions+1] = {check=macro.check,source=name}
+            end
         end
+
 
         local token_index = 1
         while token_index <= #tokens do
@@ -203,11 +222,26 @@ return function(BUS)
                         call_name = call_name .. tokens[slice_piece]:get()
                     end
 
-                    if not tampl.data.keyword_lookup[call_name] and macros[call_name] then
+                    local check_function_result = false
+                    local source_macro         = call_name
+                    for i=1,#check_functions do
+                        local resolver = check_functions[i]
+                        local result   = resolver.check(call_name)
 
-                        local macro_instance_presence = macro_presence[call_name] + 1
+                        check_function_result = check_function_result or result
 
-                        macro_presence[call_name] = macro_instance_presence
+                        if result then
+                            source_macro = resolver.source
+
+                            break
+                        end
+                    end
+
+                    if not tampl.data.keyword_lookup[call_name] and (macros[call_name] or check_function_result) then
+
+                        local macro_instance_presence = macro_presence[source_macro] + 1
+
+                        macro_presence[source_macro] = macro_instance_presence
 
                         local call_arguments = {}
 
@@ -271,7 +305,7 @@ return function(BUS)
                             argument_types[ARGTYPES_ENUM.generic].add(call_arguments,process_macros(whole_arg,macros,true))
                         end
 
-                        macro_injections[call_name].list[macro_instance_presence] = call_arguments
+                        macro_injections[source_macro].list[macro_instance_presence] = call_arguments
 
                         for i=name_start,call_block_end do
                             table.remove(tokens,name_start)
@@ -279,7 +313,7 @@ return function(BUS)
 
                         token_index = token_index - 1
 
-                        local hook_identity = generate_macro_identity(call_name,macro_instance_presence,true)
+                        local hook_identity = generate_macro_identity(source_macro,macro_instance_presence,true)
                         local hook_token    = tampl.build_raw_token(("--[[#%s]]"):format(hook_identity))
 
                         table.insert(tokens,name_start,hook_token)
