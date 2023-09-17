@@ -63,7 +63,6 @@ function strings.ensure_line_size(str,width)
     return result_str
 end
 
-
 function strings.function_usage(f)
     local fArgs = ""
     if type(f) == "function" then
@@ -114,6 +113,23 @@ end
 
 function strings.replace(str,old,new)
     return str:gsub(str.depattern(old),str.depattern(new))
+end
+
+function strings.split_on(input_str,separator)
+    local parts,start_idx = {},1
+
+    while true do
+        local found_idx = input_str:find(separator,start_idx,true)
+        local part      = input_str:sub(start_idx,(found_idx or 0) - 1)
+
+        if part ~= "" then parts[#parts+1] = part end
+
+        if not found_idx then break end
+
+        start_idx = found_idx + #separator
+    end
+
+    return parts
 end
 
 return strings

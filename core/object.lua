@@ -42,6 +42,11 @@ local function make_methods(child)
     },{__tostring = function() return "OBJECT_BUILDER->"..child:get_type() .. str.format_table__tostring(child) end})
 end
 
-return {new=function(child)
-    return setmetatable(child,{__index=make_methods(child)})
+return {new=function(child,addition)
+    local base_array = addition or {}
+    for k,v in pairs(make_methods(child)) do
+        base_array[k] = v
+    end
+
+    return setmetatable(child,{__index=base_array})
 end}

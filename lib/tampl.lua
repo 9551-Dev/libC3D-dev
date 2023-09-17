@@ -148,7 +148,85 @@ local relative_offsets   = combined_lookup(positioning_types,positioning_offsets
 local keyword_lookup = lookupify(keywords)
 local token_lookup   = lookupify(lua_tokens)
 
-local function generate_tokens(str)
+local TOKEN_MT = {__tostring=function(self) return "TOKEN: " .. self.type  end}
+local SCOPE_MT = {__tostring=function(self) return "SCOPE: " .. self.index end}
+
+local HOOK_MT = {__index={
+    set_type = function(self,type)
+        self.type = type
+    end
+},__tostring=function(self) return "HOOK: " .. self.name end}
+
+local function make_value(token,token_buffer,token_index)
+    local out
+    if keyword_lookup[token] then
+        local keyword_type = keyword_lookup[token]
+        if keyword_type and keyword_value_proccessor[keyword_type] then
+            out = keyword_value_proccessor[keyword_type][token](token_buffer,token_index)
+        end
+    elseif token_lookup[token] then
+        out = "lua_token"
+    elseif token:match("^%-%-")    or token:match("^%-%-%[%[.+%]%]$") then
+        out = token:match("^%-%-%[%[(.+)%]%]$") or token:match("^%-%-(.+)")
+    elseif token:match("^\".+\"$") or token:match("^%[%[.+%]%]$") then
+        out = token:match("^%[%[(.+)%]%]$") or token:match("^\"(.+)\"$")
+    elseif tonumber(token) ~= nil then
+        out = tonumber(token)
+    else out = token end
+
+    return out
+end
+
+local function make_type(token)
+    local out
+    local keyword_type
+    if keyword_lookup[token] then
+        out = "lua_keyword"
+        keyword_type = keyword_lookup[token]
+    elseif token_lookup[token] then
+        out = "lua_token"
+    elseif token:match("^%-%-")    or token:match("^%-%-%[%[.+%]%]$") then
+        out = "comment"
+    elseif token:match("^\".+\"$") or token:match("^%[%[.+%]%]$") then
+        out = "string"
+    elseif tonumber(token) ~= nil then
+        out = "number"
+    else out = "name" end
+
+    return out,keyword_type
+end
+
+local function parse_token(out,token,token_buffer,token_index)
+    out.entry  = "token"
+    out.name   = token
+
+    out.type,out.keyword_type = make_type (token)
+    out.value                 = make_value(token,token_buffer,token_index)
+
+    setmetatable(out,TOKEN_MT)
+
+    return out
+end
+
+local RAW_TOKEN_MT = {
+    __index = {
+        parse=function(this)
+            local reference = {}
+            return parse_token(reference,this:get())
+        end,
+        get=function(this)
+            return this.str_token
+        end,
+        rawtoken = true
+    },
+    __tostring=function(this) return "RAW_TOKEN: " .. this:get()  end
+}
+
+local function make_raw_token(str_token)
+    return setmetatable({str_token=str_token},RAW_TOKEN_MT)
+end
+
+local function generate_tokens(str,objectify_tokens)
     str = str .. "\0"
     local tokens = {}
     local token = ""
@@ -223,67 +301,13 @@ local function generate_tokens(str)
 
     if token ~= "" then tokens[#tokens+1] = token end
 
-    return tokens
-end
-
-local function make_value(token,token_buffer,token_index)
-    local out
-    if keyword_lookup[token] then
-        local keyword_type = keyword_lookup[token]
-        if keyword_type and keyword_value_proccessor[keyword_type] then
-            out = keyword_value_proccessor[keyword_type][token](token_buffer,token_index)
+    if objectify_tokens then
+        for k,v in ipairs(tokens) do
+            tokens[k] = make_raw_token(v)
         end
-    elseif token_lookup[token] then
-        out = "lua_token"
-    elseif token:match("^%-%-")    or token:match("^%-%-%[%[.+%]%]$") then
-        out = token:match("^%-%-%[%[(.+)%]%]$") or token:match("^%-%-(.+)")
-    elseif token:match("^\".+\"$") or token:match("^%[%[.+%]%]$") then
-        out = token:match("^%[%[(.+)%]%]$") or token:match("^\"(.+)\"$")
-    elseif tonumber(token) ~= nil then
-        out = tonumber(token)
-    else out = token end
-
-    return out
-end
-
-local function make_type(token)
-    local out
-    local keyword_type
-    if keyword_lookup[token] then
-        out = "lua_keyword"
-        keyword_type = keyword_lookup[token]
-    elseif token_lookup[token] then
-        out = "lua_token"
-    elseif token:match("^%-%-")    or token:match("^%-%-%[%[.+%]%]$") then
-        out = "comment"
-    elseif token:match("^\".+\"$") or token:match("^%[%[.+%]%]$") then
-        out = "string"
-    elseif tonumber(token) ~= nil then
-        out = "number"
-    else out = "name" end
-
-    return out,keyword_type
-end
-
-local TOKEN_MT = {__tostring=function(self) return "TOKEN: " .. self.type  end}
-local SCOPE_MT = {__tostring=function(self) return "SCOPE: " .. self.index end}
-
-local HOOK_MT = {__index={
-    set_type = function(self,type)
-        self.type = type
     end
-},__tostring=function(self) return "HOOK: " .. self.name end}
 
-local function parse_token(out,token,token_buffer,token_index)
-    out.entry  = "token"
-    out.name   = token
-
-    out.type,out.keyword_type = make_type (token)
-    out.value                 = make_value(token,token_buffer,token_index)
-
-    setmetatable(out,TOKEN_MT)
-
-    return out
+    return tokens
 end
 
 local function generate_extra_hook_info(t)
@@ -323,7 +347,9 @@ local function generate_code_tree(tokens)
     local scope_index = 0
 
     for i=1,#tokens do
-        local current_token = tokens[i]
+        local token_tmp = tokens[i]
+
+        local current_token = token_tmp.rawtoken and token_tmp:get() or (token_tmp.name or token_tmp)
 
         if scope.open_begin[current_token] then
             buffer_open = true
@@ -407,8 +433,8 @@ local function load_template_tree(tree)
             if rebuild_on_end then object.rebuild() end
             return object
         end,
-        apply_patches=function(input)
-            return generate_code(input or tree)
+        apply_patches=function(input,layered)
+            return generate_code(input or tree,layered)
         end,
         rebuild = function()
             local reconstructed = load_template_tree(tree)
@@ -467,6 +493,18 @@ local function inject_table_position(tp)
     return {pos=relative_positions[tp],offset=relative_offsets[tp]}
 end
 
+local function label_tokens(tokenized_source)
+    local out = {}
+
+    for token_index=1,#tokenized_source do
+        local current_token = tokenized_source[token_index]
+
+        out[token_index] = parse_token({},current_token)
+    end
+
+    return out
+end
+
 return {
     new_patch               = load_template,
     new_patch_from_file     = load_template_file,
@@ -474,8 +512,22 @@ return {
     new_patch_from_compiled = load_template_tree,
     generate_from_tokens    = generate_from_tokens,
     generate_from_tree      = generate_code,
+    build_raw_token         = make_raw_token,
     compile_code            = parse_code_block,
     tokenize_source         = generate_tokens,
+    label_tokens            = label_tokens,
+    format_code             = format_code_block,
+    tree_from_tokens        = generate_code_tree,
+    compile_tokens          = generate_code_tree,
+    parse_token             = parse_token,
     At                      = inject_table_position,
-    format_code             = format_code_block
+    data = {
+        keyword_lookup = keyword_lookup,
+        token_lookup   = token_lookup,
+        scope = {
+            open_begin = scope.open_begin,
+            open       = scope.open,
+            close      = scope.close
+        }
+    }
 }

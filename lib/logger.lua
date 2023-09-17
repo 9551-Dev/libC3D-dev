@@ -21,7 +21,7 @@ end
 
 local t_remove,max,ipairs = table.remove,math.max,ipairs
 
-function index:dump()
+function index:dump(disable_flatten)
     local lastLog = ""
     local nstr = 1
     local output_internal = {}

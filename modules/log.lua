@@ -11,6 +11,8 @@ return function(BUS)
 
             local log_types = getmetatable(BUS.log).__index
 
+            log_module:set_entry(c3d.registry.entry("type"),log_types)
+
             log_module:set_entry(c3d.registry.entry("get_log"),function()
                 return log_api
             end)
@@ -46,11 +48,11 @@ return function(BUS)
                 local function printout(dist,val)
                     for k,v in pairs(val) do
                         if type(v) == "table" and not seen[v] then
-                            log_api((" "):rep(dist).."|"..tostring(k)..("("..tostring(v)..")"),typ or log_api.debug)
+                            log_api((" "):rep(dist).."|"..tostring(k)..("("..tostring(v)..")"),typ or log_api.info)
                             seen[v] = true
                             printout(dist+1,v)
                         else
-                            log_api((" "):rep(dist).."|"..tostring(k).." -> "..tostring(v),typ or log_api.debug)
+                            log_api((" "):rep(dist).."|"..tostring(k).." -> "..tostring(v),typ or log_api.info)
                         end
                     end
                     if next(val) then log_api("",typ or log_api.debug) end
@@ -58,8 +60,6 @@ return function(BUS)
                 printout(1,t)
                 log_api("",typ)
             end)
-
-            log_module:set_entry(c3d.registry.entry("type"),function() end)
         end
 
         log:register()

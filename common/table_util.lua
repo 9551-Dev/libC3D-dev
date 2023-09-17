@@ -58,7 +58,7 @@ function tbls.deepcopy(tbl,keep,seen)
     local out = {}
     instance_seen[tbl] = out
     for copied_key,copied_value in pairs(tbl) do
-        local is_table = type(copied_value) == "table" and not keep[copied_key]
+        local is_table = type(copied_value) == "table" and not (keep and keep[copied_key])
 
         if type(copied_key) == "table" then
             if instance_seen[copied_key] then
