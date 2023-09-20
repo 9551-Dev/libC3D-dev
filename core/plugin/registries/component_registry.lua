@@ -16,8 +16,6 @@ return {attach=function(BUS)
             add_macro = function(this,macro_entry,entry_point)
                 local registry_id = generic.uuid4()
 
-                _G.reg = macro_entry
-
                 if macro_entry then
                     this.macros[registry_id] = {
                         data        = macro_entry,
@@ -43,9 +41,10 @@ return {attach=function(BUS)
             end,
             __apply_source = function(this,code)
                 do
-                    local component_macros = macro.from_bus(BUS,this.macros)
+                    --local component_macros = macro.from_bus(BUS,this.macros)
 
-                    macro.process(code,component_macros)
+
+                    --macro.process(code,component_macros)
                 end
             end
         },__tostring=function(self) return str.format_table__tostring(self) end

@@ -400,7 +400,6 @@ end
 function body(tokens, start, indent, res)
     while start and start <= #tokens do
         local v = tokens[start]
-        print("body", indent, v, start)
         if v:match "^%-%-" then
             res.str = res.str .. v .. "\n" .. (" "):rep(indent) .. res.comment
             res.comment = ""

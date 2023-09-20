@@ -17,6 +17,10 @@ return function(BUS)
                 return log_api
             end)
 
+            log_module:set_entry(c3d.registry.entry("set_flatten"),function(state)
+                log_api.disable_flatten = not state
+            end)
+
             log_module:set_entry(c3d.registry.entry("add"),function(text,type)
                 log_api(text,type)
             end)
