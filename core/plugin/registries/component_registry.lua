@@ -112,7 +112,7 @@ return {attach=function(BUS)
     local component_registry_methods = {
         __index=object.new{
             set_entry = function(this,registry_entry,settings)
-                log(str.interpolate("Created in component registry entry -> $<name>"){name=registry_entry.name},log.info)
+                log(str.interpolate("Created new component registry entry -> $<name>"){name=registry_entry.name},log.info)
                 log:dump()
 
                 local dat = {
