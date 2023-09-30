@@ -18,20 +18,25 @@ return function(BUS,ENV)
 
         local reg_entry = registry_entry.new("[TEMPORARY]")
 
-        local source_function,entry_points,string_source
+        local source_function,entry_points,string_source,def_args
         if type(settings) == "table" and settings.from_file and settings.__c3d_signature == BUS.signature then
             local source_string,source_path = file_reader.get_data_path(source)
 
             if type(settings.component_prefix) == "string" then
-                source_string,entry_points = plugin_helper.patch_plugin_file(source_string,settings.component_prefix)
+                source_string,entry_points,def_args = plugin_helper.patch_plugin_file(source_string,settings.component_prefix)
 
                 for i=1,#entry_points do
+                    local argument_definition = def_args[i]
+
                     plugin_env[entry_points[i]] = function(source)
                         if not BUS.plugin.component_sources[reg_entry.id] then
                             BUS.plugin.component_sources[reg_entry.id] = {}
                         end
 
-                        BUS.plugin.component_sources[reg_entry.id][entry_points[i]] = source
+                        BUS.plugin.component_sources[reg_entry.id][entry_points[i]] = {
+                            code      = source,
+                            arguments = argument_definition
+                        }
                     end
                 end
             end
@@ -49,7 +54,16 @@ return function(BUS,ENV)
 
             reg_entry.name = name
 
-            return BUS.object.plugin.new(reg_entry,name,string_source,settings)
+            local creation_meta = {
+                source_string = string_source,
+                settings      = settings
+            }
+
+            if type(settings) == "table" and settings.from_file then
+                creation_meta.source_file = source
+            end
+
+            return BUS.object.plugin.new(reg_entry,name,creation_meta)
         end}
 
         plugin_env.plug   = plugin_factory

@@ -1,3 +1,4 @@
+local expect         = require("cc.expect").expect
 local code_formatter = require("lib.format_code")
 
 local TEMPLATE_TYPE = {}
@@ -227,6 +228,8 @@ local function make_raw_token(str_token)
 end
 
 local function generate_tokens(str,objectify_tokens)
+    expect(1,str,"string")
+
     str = str .. "\0"
     local tokens = {}
     local token = ""

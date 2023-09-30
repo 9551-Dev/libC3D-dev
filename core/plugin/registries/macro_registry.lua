@@ -18,7 +18,6 @@ return {attach=function(BUS)
                 log(str.interpolate("Created in macro registry entry -> $<name>"){name=registry_entry.name},log.info)
                 log:dump()
 
-
                 local dat = {
                     entry     = registry_entry,
                     processor = processor_function

@@ -4,6 +4,8 @@ local str = require("common.string_util")
 
 local plugin_helper = require("core.plugin.helper")
 
+local DEFAULT_ORDER = 0
+
 return {add=function(BUS)
 
     local function attach_register(source,f,register_name,data)
@@ -82,22 +84,31 @@ return {add=function(BUS)
             end,
             override=function(this,tp,val)
                 BUS.plugin.scheduled_overrides[this.order][tp] = val
+            end,
+            before = function(this)
+                return this.order - 1
+            end,
+            after = function(this)
+                return this.order + 1
             end
         },__tostring=function() return "plugin" end
     }
 
-    return {new=function(entry,registry_name,string_source,settings)
+    return {new=function(entry,registry_name,meta)
         local allocated_bus = {}
         BUS.plugin.plugin_bus[registry_name] = allocated_bus
 
         local obj = {
-            entry  = entry,
-            id     = entry.id,
-            order  = 0,
-            PLUGID = registry_name,
-            bus    = allocated_bus,
-            code   = string_source,
+            source_path = meta.source_file,
+            entry       = entry,
+            id          = entry.id,
+            order       = DEFAULT_ORDER,
+            PLUGID      = registry_name,
+            bus         = allocated_bus,
+            code        = meta.source_string,
         }
+
+        local settings = meta.settings
 
         if type(settings) == "table" and settings.__c3d_signature == BUS.signature then
             obj.component_prefix = settings.component_prefix

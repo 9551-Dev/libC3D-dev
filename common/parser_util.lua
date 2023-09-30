@@ -49,11 +49,15 @@ function parse.function_args(call)
 end
 
 function parse.function_call(call)
-    local name,args_string = call:match("^([%w_%.:]+)%((.-)%)$")
+    local name,args_string = call:match("^([%w_%.:]+)% ?%((.-)%)$")
     local call_args = {}
-    for c in args_string:gmatch("[^,]+") do
-        call_args[#call_args+1] = c
+
+    if args_string then
+        for c in args_string:gmatch("[^,]+") do
+            call_args[#call_args+1] = c:gsub("^% *",""):gsub("% *$","")
+        end
     end
+
     return name,call_args
 end
 
@@ -177,11 +181,14 @@ function parse.match_from_call(source)
 end
 
 function parse.stringify_call_arg1(str)
+    local call_arg
     return str:gsub("^(%s-%(%s-)(function%s-%(.-%))",function(a,b)
+        call_arg = b
+
         return a .. "[["
     end):gsub("(.*)end(.-)$",function(a,b)
         return a .. "]]" .. b
-    end),str:match("^%s-%(%s-(function%s-%(.-%))")
+    end),str:match("^%s-%(%s-(function%s-%(.-%))"),select(2,parse.function_call(call_arg))
 end
 
 local function compare_with_wildcard(val1,val2)
