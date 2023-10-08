@@ -7,7 +7,7 @@ return function(BUS)
         function argument_macro.register_macros()
             local macro_registry = c3d.registry.get_macro_registry()
 
-            macro_registry:set_entry(c3d.registry.entry("c3d_core_argument_macro"),function(util,name)
+            macro_registry:set_entry(c3d.registry.entry("__c3d_core_argument_macro"),function(util,name)
                 local parent_component = util.data.all.parent
                 local this_component   = util.data.all
 

@@ -1,5 +1,7 @@
 local CEIL = math.ceil
 
+local str_util = require("common.string_util")
+
 return function(BUS)
     return function()
         local sys = plugin.new("c3d:module->system")
@@ -18,7 +20,7 @@ return function(BUS)
 
             system_module:set_entry(c3d.registry.entry("clamp_color"),function(color,limit)
                 return CEIL(color*limit)/limit
-                
+
             end)
 
             system_module:set_entry(c3d.registry.entry("set_package"),function(name)
@@ -29,6 +31,10 @@ return function(BUS)
             end)
             system_module:set_entry(c3d.registry.entry("create_package"),function(name,provider)
                 BUS.instance.package[name] = provider(BUS.instance.package)
+            end)
+
+            system_module:set_entry(c3d.registry.entry("pretty"),function(data)
+                return str_util.format_table__tostring(data)
             end)
         end
 

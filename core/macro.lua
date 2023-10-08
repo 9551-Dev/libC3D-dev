@@ -98,6 +98,9 @@ return function(BUS)
                 if str then
                     return ("\"%s\""):format(str)
                 end
+            end,
+            get_call = function(this)
+                return this.__name
             end
         },tampl),__tostring = function(self) return strutil.format_table__tostring(self) end,
         __type = "macro_util"
@@ -192,7 +195,8 @@ return function(BUS)
                 keep_hooks = macro.keep_hooks,
                 macro_id   = generic.macro_id(),
 
-                list = {}
+                call_name = {},
+                list      = {}
             }
 
             if type(macro.check) == "function" then
@@ -223,7 +227,7 @@ return function(BUS)
                     end
 
                     local check_function_result = false
-                    local source_macro         = call_name
+                    local source_macro          = call_name
                     for i=1,#check_functions do
                         local resolver = check_functions[i]
                         local result   = resolver.check(call_name)
@@ -305,7 +309,8 @@ return function(BUS)
                             argument_types[ARGTYPES_ENUM.generic].add(call_arguments,process_macros(whole_arg,macros,true))
                         end
 
-                        macro_injections[source_macro].list[macro_instance_presence] = call_arguments
+                        macro_injections[source_macro].call_name[macro_instance_presence] = call_name
+                        macro_injections[source_macro].list     [macro_instance_presence] = call_arguments
 
                         for i=name_start,call_block_end do
                             table.remove(tokens,name_start)
@@ -337,7 +342,8 @@ return function(BUS)
                 local identity   = generate_macro_identity(macro_name,macro_index,false)
                 local macro_hook = macro_patchable[identity]
 
-                local injection_code = macro.processor(dedicated_utils,table.unpack(arguments))
+                dedicated_utils.__name = macro.call_name[macro_index]
+                local injection_code   = macro.processor(dedicated_utils,table.unpack(arguments,1,arguments.n))
 
                 macro_patchable.inject(macro_hook,tampl.At("HEAD"),injection_code)
                 if not macro.keep_hooks then

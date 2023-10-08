@@ -86,17 +86,68 @@ function strings.function_usage(f)
     return fArgs
 end
 
-function strings.format_table__tostring(tbl)
-    local str = "<"
-    for k,v in next,tbl do
-        if type(v) == "function" then
-            v = "function" .. strings.function_usage(v)
-        end
+function strings.format_table__tostring(tbl, visited, indent, key_stack, path_table, root_path)
+    if not visited    then visited    = {} end
+    if not indent     then indent     = 1  end
+    if not key_stack  then key_stack  = {} end
+    if not path_table then path_table = {} end
+    if not root_path  then root_path  = "" end
 
-        str = str .. ("%s=%s; "):format(tostring(k),tostring(v))
+    local current_path = table.concat(key_stack, ".")
+
+    if visited[tbl] then
+        local circular_key = table.concat(key_stack, ".")
+        local reference_to = (visited[tbl] ~= "") and visited[tbl] or "__root__"
+        return "<circular reference at: " .. circular_key .. ", points to: " .. reference_to .. ">"
     end
 
-    return str:gsub(";% $","") .. ">"
+    local str = "{\n"
+    visited[tbl] = current_path
+    if not path_table[current_path] then
+        path_table[current_path] = table.concat(key_stack, ".")
+    end
+
+    for k, v in pairs(tbl) do
+        table.insert(key_stack, tostring(k))
+        local key_str = (" "):rep(indent * 4) .. tostring(k) .. " = "
+
+        if type(v) == "function" then
+            v = "function" .. strings.function_usage(v)
+        elseif type(v) == "table" then
+            v = strings.format_table__tostring(v, visited, indent + 1, key_stack, path_table, root_path)
+        elseif type(v) == "string" then
+            local lines = {}
+
+            local newline_cnt = 0
+
+            for line in (v):gmatch("[^\r\n]+") do
+                newline_cnt = newline_cnt + 1
+
+                local padding = (newline_cnt > 1) and (" "):rep(indent * 4) or ""
+
+                table.insert(lines,padding..line)
+            end
+            v = "\"" .. table.concat(lines,"\n") .. "\""
+        else
+            v = tostring(v)
+        end
+        table.remove(key_stack)
+
+        str = str .. key_str .. v
+        if next(tbl,k) then
+            str = str .. ","
+        end
+
+        str = str .. "\n"
+    end
+
+    str = str .. (" "):rep((indent - 1) * 4) .. "}"
+
+    if visited[tbl] then
+        visited[tbl] = nil
+    end
+
+    return str
 end
 
 function strings.interpolate(str)

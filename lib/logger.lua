@@ -35,7 +35,9 @@ function index:dump(disable_flatten)
             nstr = 1
         end
 
-        longest = max(longest, #v.str)
+        for c in v.str:gmatch("[^\n]+") do
+            longest = max(longest,#c)
+        end
 
         output_internal[#output_internal + 1] = { str = v.str, count = nstr }
         lastLog = remove_time(v.str) .. v.type

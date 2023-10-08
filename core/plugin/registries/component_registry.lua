@@ -58,18 +58,19 @@ return {attach=function(BUS)
 
                 return this
             end,
-            apply_self = function(this,parent)
+            apply_self = function(this,parent,shared)
                 local source_code = this:__get_source()
 
-                return this:__apply_source(source_code.code,parent),nil
+                return this:__apply_source(source_code.code,parent,shared),nil
             end,
-            __apply_source = function(this,source_code,parent)
+            __apply_source = function(this,source_code,parent,shared)
                 local source_buffer = source_code
 
                 local instance_identifier = generic.uuid4()
 
                 this.current_instance = instance_identifier
                 this.parent           = parent
+                this.shared           = (parent or {}).shared or shared
 
                 this.instance_data[instance_identifier] = {
                     arguments = {}
@@ -142,6 +143,9 @@ return {attach=function(BUS)
                 end
 
                 return setmetatable(entry,component_registry_entry):__build()
+            end,
+            lookup = function(this,name)
+                return this.entry_lookup[name]
             end,
             bind = plugin_helper.bind
         },__tostring=function(self) return str.format_table__tostring(self) end

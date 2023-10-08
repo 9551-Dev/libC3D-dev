@@ -6,10 +6,10 @@ return function(BUS)
         function pipe.on_init_finish()
             local base_layout = BUS.object.layout.new()
                 :add_vertex_attribute("position[x;y;z]",3,BUS.c3d.model.map("vertices","tris"))
-                :add_face_attribute  ("id[]",  1,BUS.c3d.model.provide("tris",3))
+                :add_face_attribute  ("id[]",1,BUS.c3d.model.provide("tris",3))
             :generate()
 
-            BUS.pipe.default = BUS.object.pipeline.new(base_layout,BUS.pipe.default.id)
+            BUS.pipe.default = BUS.object.pipeline.new(base_layout,BUS.pipe.default.id):compile()
         end
 
         function pipe.register_modules()

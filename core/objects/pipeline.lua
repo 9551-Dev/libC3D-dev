@@ -19,11 +19,15 @@ return {add=function(BUS)
                 return this.layout.object
             end)
 
-            pipeline_object:set_entry(c3d.registry.entry("compile"),function(self)
-                local pipeline_build = pipeline_builder.build(self)
+            pipeline_object:set_entry(c3d.registry.entry("compile"),function(this)
+                local pipeline_build = pipeline_builder.build(this)
 
-                pipeline.builds[#pipeline.builds+1] = pipeline_build
-                pipeline.current_build              = pipeline_build
+                this.builds[#this.builds+1] = pipeline_build
+                this.current_build          = pipeline_build
+
+                BUS.log("Compiling pipeline...")
+
+                return this
             end)
 
             pipeline_object:constructor(function(layout_source,id_override)

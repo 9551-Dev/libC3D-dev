@@ -233,11 +233,13 @@ return function(ENV,libdir,...)
     BUS.plugin_internal.register_modules       ()
     BUS.plugin_internal.load_registered_modules()
 
-    ENV.c3d.plugin.load(require("core.pipeline.macros.core.component_argument")(BUS))
+    ENV.c3d.plugin.load(require("core.codegen.macros.core.component_argument")(BUS))
+
+    ENV.c3d.plugin.load(require("core.pipeline.macros.test")                  (BUS))
     BUS.plugin_internal.register_macros()
     BUS.plugin_internal.load_registered_macros()
 
-    ENV.c3d.plugin.load("core.pipeline.root",ENV.c3d.plugin.sign{from_file=true,component_prefix="__c3d_component_"})
+    ENV.c3d.plugin.load("core.pipeline.components.__root__",ENV.c3d.plugin.sign{from_file=true,component_prefix="__c3d_register"})
     BUS.plugin_internal.register_components()
     BUS.plugin_internal.load_registered_components()
 
