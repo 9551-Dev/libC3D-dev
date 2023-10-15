@@ -1,3 +1,5 @@
+local str_util = require("common.string_util")
+
 local path = fs.getDir(select(2,...)):match("(.+)%/.+$")
 local index = {
     error=1,
@@ -52,8 +54,9 @@ function index:dump(disable_flatten)
     return str
 end
 
-local function write_to_log_internal(self,str,type)
-    local str = tostring(str)
+local function write_to_log_internal(self,str,type,fancy_tostring)
+    local str = fancy_tostring and str_util.format_table__tostring(str) or tostring(str)
+
     type = type or "info"
     local timeStr = tostring(#self.history+1)..": ["..(os.date("%T", os.epoch "utc" / 1000) .. (".%03d"):format(os.epoch "utc" % 1000)):gsub("%."," ").."] "
     local type_str = "["..(revIndex[type] or "info").."]"

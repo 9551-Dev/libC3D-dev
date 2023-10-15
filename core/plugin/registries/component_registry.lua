@@ -58,19 +58,20 @@ return {attach=function(BUS)
 
                 return this
             end,
-            apply_self = function(this,parent,shared)
+            apply_self = function(this,parent,extra_data)
                 local source_code = this:__get_source()
 
-                return this:__apply_source(source_code.code,parent,shared),nil
+                return this:__apply_source(source_code.code,parent,extra_data),nil
             end,
-            __apply_source = function(this,source_code,parent,shared)
+            __apply_source = function(this,source_code,parent,extra_data)
                 local source_buffer = source_code
 
                 local instance_identifier = generic.uuid4()
 
                 this.current_instance = instance_identifier
                 this.parent           = parent
-                this.shared           = (parent or {}).shared or shared
+                this.shared           = (parent or {}).shared or (extra_data and extra_data.shared)
+                this.inject           = (parent or {}).inject or (extra_data and extra_data.inject)
 
                 this.instance_data[instance_identifier] = {
                     arguments = {}
@@ -79,7 +80,7 @@ return {attach=function(BUS)
                 do
                     local localized_macros = plugin_helper.quick_macro(BUS,this,this.macros)
 
-                    source_buffer = macro.process(source_buffer,localized_macros)
+                    source_buffer = macro.process(source_buffer,localized_macros,nil)
                 end
 
                 local localized_components = plugin_helper.quick_components(BUS,this)

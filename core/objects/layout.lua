@@ -183,6 +183,10 @@ return {add=function(BUS)
                 return cast
             end)
 
+            layout_object:set_entry(c3d.registry.entry("get_getter"),function(this)
+                return this.generated.data_getter
+            end)
+
             layout_object:constructor(function()
                 return {
                     layout_attributes = {__n=0},

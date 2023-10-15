@@ -72,14 +72,25 @@ return {
             macro_data     = this.macros,
             component_data = this.components,
             all            = this,
-            parent         = this.parent
+            parent         = this.parent,
+            shr            = this.shared
         }
 
         for registry_id,macro_provider in pairs(list) do
             macro_data[macro_provider.entry_point] = {
                 processor = function(utils,...)
                     utils.data = internal_data
-                    return macro_provider.data.processor(utils,...)
+
+                    local base_env = getfenv(macro_provider.data.processor)
+                    local new_env  = setmetatable(this.inject or {},{__index=base_env})
+
+                    setfenv(macro_provider.data.processor,new_env)
+
+                    local result = table.pack(macro_provider.data.processor(utils,...))
+
+                    setfenv(macro_provider.data.processor,base_env)
+
+                    return table.unpack(result,1,result.n)
                 end
             }
         end

@@ -8,7 +8,7 @@ return function(BUS)
             local macro_registry = c3d.registry.get_macro_registry()
 
             macro_registry:set_entry(c3d.registry.entry("__c3d_pipeline_test_macro"),function(util,name)
-                return util.compile(util.data.all.shared.pipe.layout.object.generated.data_getter)
+                return util.compile(layout:get_getter())
             end)
         end
 

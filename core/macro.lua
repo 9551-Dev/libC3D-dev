@@ -343,7 +343,8 @@ return function(BUS)
                 local macro_hook = macro_patchable[identity]
 
                 dedicated_utils.__name = macro.call_name[macro_index]
-                local injection_code   = macro.processor(dedicated_utils,table.unpack(arguments,1,arguments.n))
+
+                local injection_code  = macro.processor(dedicated_utils,table.unpack(arguments,1,arguments.n))
 
                 macro_patchable.inject(macro_hook,tampl.At("HEAD"),injection_code)
                 if not macro.keep_hooks then
